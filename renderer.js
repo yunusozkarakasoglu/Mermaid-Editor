@@ -1,0 +1,292 @@
+const editor = document.getElementById('editor');
+const preview = document.getElementById('preview');
+const pathLabel = document.getElementById('path-label');
+
+let currentPath = null;
+let dirty = false;
+let debounceTimer = null;
+let lastSvg = '';
+let lastSvgError = null;
+let themeIndex = 0;
+const THEMES = ['default', 'dark', 'forest', 'neutral', 'modern'];
+
+function setTheme() {
+  const theme = THEMES[themeIndex % THEMES.length];
+  mermaid.initialize({ startOnLoad: false, theme, securityLevel: 'loose', htmlLabels: false, fontFamily: 'system-ui' });
+  renderPreview();
+}
+
+function esc(s) {
+  return s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+}
+
+async function renderPreview() {
+  const code = editor.value;
+  if (!code.trim()) {
+    preview.innerHTML = '<div class="hint">Diyagram kodu girin…</div>';
+    lastSvg = '';
+    lastSvgError = null;
+    return;
+  }
+  try {
+    const id = 'mmd-' + Math.random().toString(36).slice(2);
+    preview.innerHTML = '';
+    const { svg } = await mermaid.render(id, code);
+    preview.innerHTML = svg;
+    lastSvg = svg;
+    lastSvgError = null;
+  } catch (e) {
+    preview.innerHTML = '<div class="err">' + esc(e.message || String(e)) + '</div>';
+    lastSvg = '';
+    lastSvgError = e.message || String(e);
+  }
+}
+
+function onInput() {
+  dirty = true;
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(renderPreview, 300);
+}
+
+async function loadFile(p) {
+  const res = await window.api.readFile(p);
+  if (!res.ok) {
+    alert('Dosya okunamadı: ' + (res.error || p));
+    return;
+  }
+  currentPath = res.path;
+  editor.value = res.content;
+  pathLabel.textContent = res.path;
+  document.title = res.path.split('/').pop() + ' — Mermaid Editor';
+  dirty = false;
+  renderPreview();
+}
+
+async function save() {
+  if (!currentPath) return saveAs();
+  const res = await window.api.writeFile(currentPath, editor.value);
+  if (res.ok) {
+    dirty = false;
+    pathLabel.textContent = currentPath;
+  } else {
+    alert('Kaydedilemedi: ' + (res.error || ''));
+  }
+}
+
+async function saveAs() {
+  const def = currentPath || 'diagram.mmd';
+  const res = await window.api.saveAs(editor.value, def);
+  if (res.ok) {
+    currentPath = res.path;
+    dirty = false;
+    pathLabel.textContent = res.path;
+    document.title = res.path.split('/').pop() + ' — Mermaid Editor';
+  } else if (!res.canceled) {
+    alert('Kaydedilemedi: ' + (res.error || ''));
+  }
+}
+
+async function exportSvg() {
+  if (!lastSvg) { alert('Önce geçerli bir diyagram oluştur.'); return; }
+  const res = await window.api.exportSvg(lastSvg, currentPath);
+  if (res.ok && !res.canceled) alert('SVG kaydedildi: ' + res.path);
+}
+
+async function exportPng() {
+  if (!lastSvg) { alert('Önce geçerli bir diyagram oluştur.'); return; }
+  try {
+    const img = new Image();
+    const svgBlob = new Blob([lastSvg], { type: 'image/svg+xml' });
+    img.src = URL.createObjectURL(svgBlob);
+    await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; });
+    const svgEl = preview.querySelector('svg');
+    const w = svgEl ? svgEl.viewBox.baseVal.width || svgEl.getBoundingClientRect().width : 800;
+    const h = svgEl ? svgEl.viewBox.baseVal.height || svgEl.getBoundingClientRect().height : 600;
+    const canvas = document.createElement('canvas');
+    canvas.width = w * 2;
+    canvas.height = h * 2;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(2, 2);
+    ctx.fillStyle = THEMES[themeIndex % THEMES.length] === 'dark' ? '#1e1e2e' : '#ffffff';
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(img, 0, 0, w, h);
+    const dataUrl = canvas.toDataURL('image/png');
+    const res = await window.api.exportPng(dataUrl, currentPath);
+    if (res.ok && !res.canceled) alert('PNG kaydedildi: ' + res.path);
+  } catch (e) {
+    alert('PNG üretilemedi: ' + e.message);
+  }
+}
+
+// ----- etkinlikler -----
+document.getElementById('btn-new').onclick = () => {
+  currentPath = null; editor.value = ''; pathLabel.textContent = ''; dirty = false;
+  document.title = 'Mermaid Editor'; renderPreview();
+};
+document.getElementById('btn-open').onclick = async () => {
+  const p = await window.api.pickFile();
+  if (p) loadFile(p);
+};
+document.getElementById('btn-save').onclick = save;
+document.getElementById('btn-saveas').onclick = saveAs;
+document.getElementById('btn-theme').onclick = () => { themeIndex++; setTheme(); };
+document.getElementById('btn-export-svg').onclick = exportSvg;
+document.getElementById('btn-export-png').onclick = exportPng;
+editor.addEventListener('input', onInput);
+
+window.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); save(); }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'o') { e.preventDefault(); document.getElementById('btn-open').click(); }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') { e.preventDefault(); showAiModal(); }
+  if (e.key === 'Escape' && !aiModal.classList.contains('hidden')) { aiModal.classList.add('hidden'); }
+});
+
+window.addEventListener('beforeunload', (e) => {
+  if (dirty) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
+
+window.api.onOpenFile((p) => loadFile(p));
+
+// ----- AI ile Oluştur (basit mantık) -----
+const aiModal = document.getElementById('ai-modal');
+const aiNoapi = document.getElementById('ai-noapi');
+const aiReady = document.getElementById('ai-ready');
+const aiStatus = document.getElementById('ai-status');
+const aiError = document.getElementById('ai-error');
+const aiCodeEl = document.getElementById('ai-code');
+const aiPreview = document.getElementById('ai-preview');
+const aiApplyBtn = document.getElementById('ai-apply');
+let aiSettings = null;
+let aiDebounce = null;
+let aiLastSvg = '';
+
+function showAiModal() {
+  aiModal.classList.remove('hidden');
+  aiError.textContent = '';
+  refreshAiState();
+  if (aiSettings?.apiKey) document.getElementById('ai-prompt').focus();
+}
+
+function refreshAiState() {
+  const hasKey = !!(aiSettings && aiSettings.apiKey);
+  aiNoapi.classList.toggle('hidden', hasKey);
+  aiReady.classList.toggle('hidden', !hasKey);
+  if (!hasKey) {
+    document.getElementById('ai-key').value = aiSettings?.apiKey || '';
+    document.getElementById('ai-baseurl').value = aiSettings?.baseUrl || 'https://api.deepseek.com';
+    document.getElementById('ai-model').value = aiSettings?.model || 'deepseek-chat';
+    document.getElementById('ai-provider').value = aiSettings?.provider || 'deepseek';
+  }
+}
+
+function renderAiPreview() {
+  const code = aiCodeEl.value;
+  if (!code.trim()) {
+    aiPreview.innerHTML = '<div class="hint">Diyagram burada görünecek</div>';
+    aiLastSvg = '';
+    return;
+  }
+  try {
+    const id = 'ai-' + Math.random().toString(36).slice(2);
+    mermaid.render(id, code).then(({ svg }) => {
+      aiPreview.innerHTML = svg;
+      aiLastSvg = svg;
+      aiApplyBtn.disabled = false;
+    }).catch((e) => {
+      aiPreview.innerHTML = '<div class="err">' + esc(e.message || String(e)) + '</div>';
+      aiApplyBtn.disabled = true;
+    });
+  } catch (e) {
+    aiPreview.innerHTML = '<div class="err">' + esc(e.message || String(e)) + '</div>';
+  }
+}
+
+document.getElementById('btn-ai').onclick = showAiModal;
+document.getElementById('ai-close').onclick = () => aiModal.classList.add('hidden');
+aiModal.addEventListener('click', (e) => { if (e.target === aiModal) aiModal.classList.add('hidden'); });
+
+// API yok görünümü: kaydet / auth dosyası aç / test
+document.getElementById('ai-save-settings').onclick = async () => {
+  const s = {
+    provider: document.getElementById('ai-provider').value,
+    apiKey: document.getElementById('ai-key').value.trim(),
+    baseUrl: document.getElementById('ai-baseurl').value.trim(),
+    model: document.getElementById('ai-model').value.trim(),
+  };
+  const res = await window.api.saveSettings(s);
+  const el = document.getElementById('ai-test-result');
+  if (res.ok) {
+    aiSettings = s;
+    el.textContent = '✓ kaydedildi';
+    el.className = 'ok';
+    refreshAiState();
+  } else {
+    el.textContent = '✗ ' + (res.error || 'hata');
+    el.className = 'bad';
+  }
+};
+
+document.getElementById('ai-open-file').onclick = async () => {
+  const res = await window.api.openSettingsFile();
+  const el = document.getElementById('ai-test-result');
+  if (res.ok) { el.textContent = 'Dosya açıldı.'; el.className = 'ok'; }
+  else { el.textContent = 'Açılamadı: ' + res.error; el.className = 'bad'; }
+};
+
+document.getElementById('ai-test').onclick = async () => {
+  const el = document.getElementById('ai-test-result');
+  el.textContent = 'Test ediliyor…';
+  el.className = '';
+  const res = await window.api.aiTest();
+  if (res.ok) { el.textContent = '✓ Bağlantı OK (' + res.ms + 'ms, ' + res.model + ')'; el.className = 'ok'; }
+  else { el.textContent = '✗ ' + (res.error || 'hata'); el.className = 'bad'; }
+};
+
+// API var görünümü: oluştur / editöre aktar / ayar düzenle
+document.getElementById('ai-generate').onclick = async () => {
+  const prompt = document.getElementById('ai-prompt').value.trim();
+  if (!prompt) { aiError.textContent = 'Önce diyagramı anlat.'; return; }
+  const btn = document.getElementById('ai-generate');
+  btn.disabled = true;
+  aiStatus.textContent = 'Oluşturuluyor…';
+  aiError.textContent = '';
+  try {
+    const res = await window.api.aiGenerate(prompt);
+    if (res.ok) {
+      aiCodeEl.value = res.code;
+      renderAiPreview();
+    } else {
+      aiError.textContent = 'Hata: ' + (res.error || 'bilinmiyor');
+    }
+  } catch (e) {
+    aiError.textContent = 'Hata: ' + e.message;
+  } finally {
+    btn.disabled = false;
+    aiStatus.textContent = '';
+  }
+};
+
+aiCodeEl.addEventListener('input', () => {
+  clearTimeout(aiDebounce);
+  aiDebounce = setTimeout(renderAiPreview, 300);
+});
+
+document.getElementById('ai-apply').onclick = () => {
+  editor.value = aiCodeEl.value;
+  dirty = true;
+  aiModal.classList.add('hidden');
+  renderPreview();
+};
+
+document.getElementById('ai-edit-settings').onclick = () => {
+  aiNoapi.classList.remove('hidden');
+  aiReady.classList.add('hidden');
+  document.getElementById('ai-test-result').textContent = '';
+};
+
+// başlangıç
+setTheme();
+window.api.getSettings().then((s) => { aiSettings = s; });

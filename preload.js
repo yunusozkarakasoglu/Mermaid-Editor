@@ -1,0 +1,16 @@
+const { contextBridge, ipcRenderer } = require('electron');
+
+contextBridge.exposeInMainWorld('api', {
+  onOpenFile: (cb) => ipcRenderer.on('open-file', (_e, p) => cb(p)),
+  readFile: (p) => ipcRenderer.invoke('read-file', p),
+  writeFile: (p, c) => ipcRenderer.invoke('write-file', p, c),
+  pickFile: () => ipcRenderer.invoke('pick-file'),
+  saveAs: (c, def) => ipcRenderer.invoke('save-as', c, def),
+  exportSvg: (svg, src) => ipcRenderer.invoke('export-svg', svg, src),
+  exportPng: (dataUrl, src) => ipcRenderer.invoke('export-png', dataUrl, src),
+  getSettings: () => ipcRenderer.invoke('get-settings'),
+  saveSettings: (s) => ipcRenderer.invoke('save-settings', s),
+  aiGenerate: (prompt) => ipcRenderer.invoke('ai-generate', prompt),
+  openSettingsFile: () => ipcRenderer.invoke('open-settings-file'),
+  aiTest: () => ipcRenderer.invoke('ai-test'),
+});

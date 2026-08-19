@@ -1,0 +1,6 @@
+{
+  "provider": "deepseek",
+  "apiKey": "sk-...",
+  "baseUrl": "https://api.deepseek.com",
+  "model": "deepseek-chat"
+}
