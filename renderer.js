@@ -11,6 +11,28 @@ function markDirty(v) {
 let debounceTimer = null;
 let lastSvg = '';
 let lastSvgError = null;
+let lastGoodSvg = ''; // hata anında önizlemede korunacak son iyi diyagram
+
+// ----- Log paneli (altta, kapatılabilir) -----
+const logPanel = document.getElementById('log-panel');
+const logContent = document.getElementById('log-content');
+let logCount = 0;
+
+function log(msg) {
+  const time = new Date().toLocaleTimeString('tr-TR');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = '<span class="log-time">' + time + '</span>' + esc(msg);
+  logContent.appendChild(entry);
+  logCount++;
+  if (logCount > 200) logContent.removeChild(logContent.firstChild);
+  logPanel.classList.remove('hidden');
+  logContent.scrollTop = logContent.scrollHeight;
+}
+
+document.getElementById('log-close').onclick = () => logPanel.classList.add('hidden');
+document.getElementById('log-clear').onclick = () => { logContent.innerHTML = ''; logCount = 0; };
+document.getElementById('btn-log').onclick = () => logPanel.classList.toggle('hidden');
 let themeIndex = 0;
 const THEMES = ['default', 'dark', 'forest', 'neutral', 'modern'];
 
@@ -62,6 +84,8 @@ const I18N = {
     tmpl_empty: '📁 Şablon klasöründe .mmd dosyası yok.', tmpl_dir: 'Klasör: ', tmpl_render_err: 'render hatası', tmpl_use: '📥 Kullan',
     close_title: 'Kaydedilmemiş değişiklikler', close_msg: 'Düzenlediğin dosyada kaydedilmemiş değişiklikler var. Ne yapmak istersin?',
     close_cancel: 'İptal', close_save: '💾 Kaydet', close_anyway: 'Yine de kapat',
+    log_title: '🪵 Log / Hatalar', log_clear: 'Temizle',
+    err_render: '⚠ Render hatası: ', err_render_short: 'Diyagram hatası — ayrıntı logda',
   },
   en: {
     btn_new: 'New', btn_open: 'Open…', btn_save: 'Save', btn_saveas: 'Save As…',
@@ -110,6 +134,8 @@ const I18N = {
     tmpl_empty: '📁 No .mmd files in the templates folder.', tmpl_dir: 'Folder: ', tmpl_render_err: 'render error', tmpl_use: '📥 Use',
     close_title: 'Unsaved changes', close_msg: 'You have unsaved changes in the file you edited. What would you like to do?',
     close_cancel: 'Cancel', close_save: '💾 Save', close_anyway: 'Close anyway',
+    log_title: '🪵 Log / Errors', log_clear: 'Clear',
+    err_render: '⚠ Render error: ', err_render_short: 'Diagram error — see log',
   },
   ru: {
     btn_new: 'Новый', btn_open: 'Открыть…', btn_save: 'Сохранить', btn_saveas: 'Сохранить как…',
@@ -158,6 +184,8 @@ const I18N = {
     tmpl_empty: '📁 В папке шаблонов нет файлов .mmd.', tmpl_dir: 'Папка: ', tmpl_render_err: 'ошибка рендера', tmpl_use: '📥 Использовать',
     close_title: 'Несохранённые изменения', close_msg: 'В файле есть несохранённые изменения. Что вы хотите сделать?',
     close_cancel: 'Отмена', close_save: '💾 Сохранить', close_anyway: 'Всё равно закрыть',
+    log_title: '🪵 Журнал / Ошибки', log_clear: 'Очистить',
+    err_render: '⚠ Ошибка рендера: ', err_render_short: 'Ошибка диаграммы — см. журнал',
   },
 };
 
@@ -202,22 +230,27 @@ function esc(s) {
 async function renderPreview() {
   const code = editor.value;
   if (!code.trim()) {
-    preview.innerHTML = '<div class="hint">Diyagram kodu girin…</div>';
+    preview.innerHTML = '<div class="hint">' + T('hint_preview') + '</div>';
     lastSvg = '';
     lastSvgError = null;
+    lastGoodSvg = '';
     return;
   }
   try {
     const id = 'mmd-' + Math.random().toString(36).slice(2);
-    preview.innerHTML = '';
     const { svg } = await mermaid.render(id, code);
     preview.innerHTML = svg;
     lastSvg = svg;
+    lastGoodSvg = svg;
     lastSvgError = null;
   } catch (e) {
-    preview.innerHTML = '<div class="err">' + esc(e.message || String(e)) + '</div>';
-    lastSvg = '';
-    lastSvgError = e.message || String(e);
+    // Hata: log paneline yaz, önizlemede son iyi diyagramı koru
+    const msg = e.message || String(e);
+    lastSvgError = msg;
+    log(T('err_render') + msg);
+    if (!lastGoodSvg) {
+      preview.innerHTML = '<div class="err">⚠ ' + T('err_render_short') + '</div>';
+    }
   }
 }
 
@@ -230,7 +263,7 @@ function onInput() {
 async function loadFile(p) {
   const res = await window.api.readFile(p);
   if (!res.ok) {
-    alert('Dosya okunamadı: ' + (res.error || p));
+    log(T('err_file_read') + (res.error || p));
     return;
   }
   currentPath = res.path;
@@ -246,7 +279,7 @@ async function save() {
   if (res.ok) {
     markDirty(false);
   } else {
-    alert('Kaydedilemedi: ' + (res.error || ''));
+    log(T('err_save') + (res.error || ''));
   }
 }
 
@@ -258,7 +291,7 @@ async function saveAs() {
     markDirty(false);
     document.title = res.path.split('/').pop() + ' — Mermaid Editor';
   } else if (!res.canceled) {
-    alert('Kaydedilemedi: ' + (res.error || ''));
+    log(T('err_save') + (res.error || ''));
   }
 }
 
@@ -338,6 +371,7 @@ async function openTmplModal() {
   const res = await window.api.listTemplates();
   if (!res.ok) {
     tmplBody.innerHTML = '<div class="tmpl-empty">' + T('tmpl_err_read') + esc(res.error || '') + '</div>';
+    log(T('tmpl_err_read') + (res.error || ''));
     return;
   }
   if (res.templates.length === 0) {
@@ -717,7 +751,8 @@ document.getElementById('ai-generate').onclick = async () => {
       aiCodeEl.value = res.code;
       renderAiPreview();
     } else {
-      aiError.textContent = 'Hata: ' + (res.error || 'bilinmiyor');
+      aiError.textContent = T('ai_err') + (res.error || '');
+      log(T('ai_err') + (res.error || ''));
     }
   } catch (e) {
     aiError.textContent = 'Hata: ' + e.message;
