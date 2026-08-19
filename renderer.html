@@ -9,6 +9,16 @@
   #toolbar { display: flex; gap: 6px; align-items: center; padding: 6px 10px; background: #181825; border-bottom: 1px solid #313244; flex-wrap: wrap; }
   #toolbar button { background: #313244; color: #cdd6f4; border: none; border-radius: 5px; padding: 5px 12px; cursor: pointer; font-size: 13px; }
   #toolbar button:hover { background: #45475a; }
+  #lang-select {
+    background: #313244;
+    color: #cdd6f4;
+    border: 1px solid #45475a;
+    border-radius: 5px;
+    padding: 4px 6px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  #lang-select:hover { background: #45475a; }
   #main { flex: 1; display: flex; min-height: 0; }
   .pane { flex: 1; min-width: 0; display: flex; flex-direction: column; }
   .pane-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; padding: 4px 10px; background: #11111b; color: #6c7086; }
@@ -110,28 +120,33 @@
 </head>
 <body>
   <div id="toolbar">
-    <button id="btn-new">Yeni</button>
-    <button id="btn-open">Aç…</button>
-    <button id="btn-save">Kaydet</button>
-    <button id="btn-saveas">Farklı kaydet…</button>
-    <button id="btn-export-svg">SVG indir</button>
-    <button id="btn-export-png">PNG indir</button>
-    <button id="btn-templates" style="margin-left:auto">📁 Şablonlar</button>
-    <button id="btn-theme">🎨 Tema</button>
-    <button id="btn-ai">✨ AI ile Oluştur</button>
+    <button id="btn-new" data-i18n="btn_new">Yeni</button>
+    <button id="btn-open" data-i18n="btn_open">Aç…</button>
+    <button id="btn-save" data-i18n="btn_save">Kaydet</button>
+    <button id="btn-saveas" data-i18n="btn_saveas">Farklı kaydet…</button>
+    <button id="btn-export-svg" data-i18n="btn_export_svg">SVG indir</button>
+    <button id="btn-export-png" data-i18n="btn_export_png">PNG indir</button>
+    <button id="btn-templates" style="margin-left:auto" data-i18n="btn_templates">📁 Şablonlar</button>
+    <button id="btn-theme" data-i18n="btn_theme">🎨 Tema</button>
+    <button id="btn-ai" data-i18n="btn_ai">✨ AI ile Oluştur</button>
+    <select id="lang-select" title="Dil / Language / Язык">
+      <option value="tr">🇹🇷 Türkçe</option>
+      <option value="en">🇬🇧 English</option>
+      <option value="ru">🇷🇺 Русский</option>
+    </select>
   </div>
   <div id="main">
     <div class="pane">
       <div class="pane-title" style="display:flex;justify-content:space-between;align-items:center">
-        <span>Editör</span>
+        <span data-i18n="pane_editor">Editör</span>
         <button id="btn-info" class="info-btn" title="Mermaid yazım kılavuzu">ⓘ</button>
       </div>
-      <textarea id="editor" spellcheck="false" placeholder="Mermaid kodu yaz veya yapıştır…&#10;örn: flowchart TD&#10;  A[Başla] --&gt; B[Bitir]"></textarea>
+      <textarea id="editor" spellcheck="false" data-i18n-ph="ph_editor" placeholder="Mermaid kodu yaz veya yapıştır…&#10;örn: flowchart TD&#10;  A[Başla] --&gt; B[Bitir]"></textarea>
     </div>
     <div class="split"></div>
     <div class="pane">
-      <div class="pane-title">Önizleme</div>
-      <div id="preview"><div class="hint">Diyagram burada canlı görünecek</div></div>
+      <div class="pane-title" data-i18n="pane_preview">Önizleme</div>
+      <div id="preview"><div class="hint" data-i18n="hint_preview">Diyagram burada canlı görünecek</div></div>
     </div>
   </div>
 
@@ -139,13 +154,13 @@
   <div id="ai-settings-modal" class="modal hidden">
     <div class="modal-box">
       <div class="modal-head">
-        <span>🔑 API Ayarı</span>
+        <span data-i18n="ai_settings_title">🔑 API Ayarı</span>
         <button id="ai-settings-close" title="Kapat">✕</button>
       </div>
-      <div class="warn">⚠️ <b>API bulunamadı.</b> Diyagram üretimi için önce API anahtarını ayarla.</div>
+      <div class="warn" data-i18n="ai_settings_warn">⚠️ <b>API bulunamadı.</b> Diyagram üretimi için önce API anahtarını ayarla.</div>
       <details>
-        <summary>Yönergeler &amp; örnek dosya</summary>
-        <div style="margin-top:6px">
+        <summary data-i18n="ai_guide_summary">Yönergeler &amp; örnek dosya</summary>
+        <div style="margin-top:6px" data-i18n="ai_guide_steps">
           1. Seçtiğin sağlayıcının sitesinden API key al (örn. DeepSeek: <a href="https://platform.deepseek.com" style="color:#89b4fa">platform.deepseek.com</a>, sk-...).<br>
           2. Aşağıdaki formu doldurup <b>Kaydet</b>'e bas, ya da <b>Auth dosyası aç</b> ile dosyayı elle düzenle.<br>
           3. Sonra <b>Test et</b> ile bağlantıyı doğrula — başarılıysa AI penceresi açılır.
@@ -158,22 +173,22 @@
 }</pre>
       </details>
       <div class="ai-form">
-        <label>Sağlayıcı
+        <label><span data-i18n="ai_lbl_provider">Sağlayıcı</span>
           <select id="ai-provider"></select>
         </label>
-        <label>API Anahtarı
+        <label><span data-i18n="ai_lbl_key">API Anahtarı</span>
           <input id="ai-key" type="password" placeholder="sk-..." autocomplete="off">
         </label>
-        <label>Base URL
+        <label><span data-i18n="ai_lbl_baseurl">Base URL</span>
           <input id="ai-baseurl" placeholder="https://api.deepseek.com">
         </label>
-        <label>Model
+        <label><span data-i18n="ai_lbl_model">Model</span>
           <input id="ai-model" placeholder="deepseek-chat">
         </label>
         <div class="ai-form-buttons">
-          <button id="ai-open-file">📄 Auth dosyası aç</button>
-          <button id="ai-save-settings">💾 Kaydet</button>
-          <button id="ai-test">🔌 Test et</button>
+          <button id="ai-open-file" data-i18n="btn_open_file">📄 Auth dosyası aç</button>
+          <button id="ai-save-settings" data-i18n="btn_save">💾 Kaydet</button>
+          <button id="ai-test" data-i18n="btn_test">🔌 Test et</button>
           <span id="ai-test-result"></span>
         </div>
       </div>
@@ -184,23 +199,23 @@
   <div id="ai-task-modal" class="modal hidden">
     <div class="modal-box ai-box">
       <div class="modal-head">
-        <span>✨ AI ile Oluştur</span>
+        <span data-i18n="ai_task_title">✨ AI ile Oluştur</span>
         <button id="ai-close" title="Kapat">✕</button>
       </div>
-      <textarea id="ai-prompt" placeholder="Diyagramı anlat… örn: Kullanıcı giriş akışı: e-posta ve şifre doğrula, token üret, dashboard'a yönlendir"></textarea>
+      <textarea id="ai-prompt" data-i18n-ph="ph_ai_prompt" placeholder="Diyagramı anlat… örn: Kullanıcı giriş akışı: e-posta ve şifre doğrula, token üret, dashboard'a yönlendir"></textarea>
       <div class="ai-actions">
-        <button id="ai-generate">✨ Oluştur</button>
-        <button id="ai-apply" disabled>📥 Editöre Aktar</button>
+        <button id="ai-generate" data-i18n="btn_generate">✨ Oluştur</button>
+        <button id="ai-apply" disabled data-i18n="btn_apply">📥 Editöre Aktar</button>
         <span id="ai-status"></span>
       </div>
       <div class="ai-split">
         <div class="ai-pane">
           <div class="pane-title">Kod</div>
-          <textarea id="ai-code" spellcheck="false" placeholder="Üretilen mermaid kodu buraya gelir…"></textarea>
+          <textarea id="ai-code" spellcheck="false" data-i18n-ph="ph_ai_code" placeholder="Üretilen mermaid kodu buraya gelir…"></textarea>
         </div>
         <div class="ai-pane">
           <div class="pane-title">Önizleme</div>
-          <div id="ai-preview"><div class="hint">Diyagram burada görünecek</div></div>
+          <div id="ai-preview"><div class="hint" data-i18n="hint_ai_preview">Diyagram burada görünecek</div></div>
         </div>
       </div>
       <div id="ai-error"></div>
@@ -211,7 +226,7 @@
   <div id="tmpl-modal" class="modal hidden">
     <div class="modal-box info-box">
       <div class="modal-head">
-        <span>📁 Şablonlar</span>
+        <span data-i18n="tmpl_title">📁 Şablonlar</span>
         <button id="tmpl-close" title="Kapat">✕</button>
       </div>
       <div class="info-body" id="tmpl-body"></div>
@@ -222,25 +237,25 @@
   <div id="info-modal" class="modal hidden">
     <div class="modal-box info-box">
       <div class="modal-head">
-        <span>📘 Mermaid Yazım Kılavuzu</span>
+        <span data-i18n="info_title">📘 Mermaid Yazım Kılavuzu</span>
         <button id="info-close" title="Kapat">✕</button>
       </div>
       <div class="info-body">
-        <h4>1. Akış Şeması (Flowchart)</h4>
-        <p><code>TD</code> = yukarıdan aşağı, <code>LR</code> = soldan sağa. Düğüm şekilleri: <code>[ ]</code> dikdörtgen, <code>{ }</code> karar, <code>( )</code> yuvarlak, <code>(( ))</code> daire. Kenarlar: <code>--&gt;</code> ok, <code>---</code> çizgi, <code>-.→</code> kesikli, <code>==&gt;</code> kalın. Kenar etiketi: <code>--&gt;|metin|</code></p>
+        <h4 data-i18n="info_h1">1. Akış Şeması (Flowchart)</h4>
+        <p data-i18n="info_p1"><code>TD</code> = yukarıdan aşağı, <code>LR</code> = soldan sağa. Düğüm şekilleri: <code>[ ]</code> dikdörtgen, <code>{ }</code> karar, <code>( )</code> yuvarlak, <code>(( ))</code> daire. Kenarlar: <code>--&gt;</code> ok, <code>---</code> çizgi, <code>-.→</code> kesikli, <code>==&gt;</code> kalın. Kenar etiketi: <code>--&gt;|metin|</code></p>
         <div class="info-example">
           <div class="info-code">
             <pre><code>flowchart TD
   A[Başla] --&gt; B{Karar}
   B --&gt;|Evet| C[İşlem]
   B --&gt;|Hayır| D[Bitir]</code></pre>
-            <button class="info-load" data-example="flow">✏️ Editöre al</button>
+            <button class="info-load" data-example="flow" data-i18n="btn_editor_load">✏️ Editöre al</button>
           </div>
           <div class="info-preview" data-preview="flow"></div>
         </div>
 
-        <h4>2. Sıralama Diyagramı (Sequence)</h4>
-        <p><code>-&gt;&gt;</code> düz mesaj, <code>--&gt;&gt;</code> kesikli yanıt, <code>Note over</code> ile açıklama.</p>
+        <h4 data-i18n="info_h2">2. Sıralama Diyagramı (Sequence)</h4>
+        <p data-i18n="info_p2"><code>-&gt;&gt;</code> düz mesaj, <code>--&gt;&gt;</code> kesikli yanıt, <code>Note over</code> ile açıklama.</p>
         <div class="info-example">
           <div class="info-code">
             <pre><code>sequenceDiagram
@@ -248,13 +263,13 @@
   participant S as Sunucu
   K-&gt;&gt;S: Giriş isteği
   S--&gt;&gt;K: Token döner</code></pre>
-            <button class="info-load" data-example="seq">✏️ Editöre al</button>
+            <button class="info-load" data-example="seq" data-i18n="btn_editor_load">✏️ Editöre al</button>
           </div>
           <div class="info-preview" data-preview="seq"></div>
         </div>
 
-        <h4>3. Sınıf Diyagramı (Class)</h4>
-        <p>Kalıtım: <code>&lt;|--</code>, uygulama: <code>..|&gt;</code>, ilişki: <code>--</code>, kompozisyon: <code>*--</code></p>
+        <h4 data-i18n="info_h3">3. Sınıf Diyagramı (Class)</h4>
+        <p data-i18n="info_p3">Kalıtım: <code>&lt;|--</code>, uygulama: <code>..|&gt;</code>, ilişki: <code>--</code>, kompozisyon: <code>*--</code></p>
         <div class="info-example">
           <div class="info-code">
             <pre><code>classDiagram
@@ -264,36 +279,36 @@
   }
   class Kedi
   Hayvan &lt;|-- Kedi</code></pre>
-            <button class="info-load" data-example="class">✏️ Editöre al</button>
+            <button class="info-load" data-example="class" data-i18n="btn_editor_load">✏️ Editöre al</button>
           </div>
           <div class="info-preview" data-preview="class"></div>
         </div>
 
-        <h4>4. Durum Diyagramı (State)</h4>
+        <h4 data-i18n="info_h4">4. Durum Diyagramı (State)</h4>
         <div class="info-example">
           <div class="info-code">
             <pre><code>stateDiagram-v2
   [*] --&gt; Boşta
   Boşta --&gt; Çalışıyor: başlat
   Çalışıyor --&gt; [*]: dur</code></pre>
-            <button class="info-load" data-example="state">✏️ Editöre al</button>
+            <button class="info-load" data-example="state" data-i18n="btn_editor_load">✏️ Editöre al</button>
           </div>
           <div class="info-preview" data-preview="state"></div>
         </div>
 
-        <h4>5. Varlık İlişki Diyagramı (ER)</h4>
-        <p>Kardinalite: <code>||--o{</code> (bir-çok), <code>||--||</code> (bir-bir), <code>}o--o{</code> (çok-çok)</p>
+        <h4 data-i18n="info_h5">5. Varlık İlişki Diyagramı (ER)</h4>
+        <p data-i18n="info_p4">Kardinalite: <code>||--o{</code> (bir-çok), <code>||--||</code> (bir-bir), <code>}o--o{</code> (çok-çok)</p>
         <div class="info-example">
           <div class="info-code">
             <pre><code>erDiagram
   KULLANICI ||--o{ SIPARIS : "verir"
   SIPARIS ||--|{ KALEM : "içerir"</code></pre>
-            <button class="info-load" data-example="er">✏️ Editöre al</button>
+            <button class="info-load" data-example="er" data-i18n="btn_editor_load">✏️ Editöre al</button>
           </div>
           <div class="info-preview" data-preview="er"></div>
         </div>
 
-        <h4>6. Gantt (Zaman Çizelgesi)</h4>
+        <h4 data-i18n="info_h6">6. Gantt (Zaman Çizelgesi)</h4>
         <div class="info-example">
           <div class="info-code">
             <pre><code>gantt
@@ -303,12 +318,12 @@
     Arayüz: 2026-01-01, 7d
   section Geliştirme
     API: 2026-01-08, 14d</code></pre>
-            <button class="info-load" data-example="gantt">✏️ Editöre al</button>
+            <button class="info-load" data-example="gantt" data-i18n="btn_editor_load">✏️ Editöre al</button>
           </div>
           <div class="info-preview" data-preview="gantt"></div>
         </div>
 
-        <h4>7. Zihin Haritası (Mindmap) &amp; Pasta (Pie)</h4>
+        <h4 data-i18n="info_h7">7. Zihin Haritası (Mindmap) &amp; Pasta (Pie)</h4>
         <div class="info-example">
           <div class="info-code">
             <pre><code>mindmap
@@ -319,7 +334,7 @@
     Frontend
       Arayüz
       State</code></pre>
-            <button class="info-load" data-example="mindmap">✏️ Editöre al</button>
+            <button class="info-load" data-example="mindmap" data-i18n="btn_editor_load">✏️ Editöre al</button>
           </div>
           <div class="info-preview" data-preview="mindmap"></div>
         </div>
@@ -329,13 +344,13 @@
   title Kullanım Dağılımı
   "Web" : 60
   "Mobil" : 40</code></pre>
-            <button class="info-load" data-example="pie">✏️ Editöre al</button>
+            <button class="info-load" data-example="pie" data-i18n="btn_editor_load">✏️ Editöre al</button>
           </div>
           <div class="info-preview" data-preview="pie"></div>
         </div>
 
-        <h4>İpucu</h4>
-        <p>• Düğüm etiketleri kısa tut, karmaşık açıklamaları kenar etiketlerine yaz.<br>
+        <h4 data-i18n="info_tip_title">İpucu</h4>
+        <p data-i18n="info_tips">• Düğüm etiketleri kısa tut, karmaşık açıklamaları kenar etiketlerine yaz.<br>
         • <code>subgraph</code> ile gruplar oluştur.<br>
         • Koyu tema için sağ üstteki <b>🎨 Tema</b> butonunu kullan.<br>
         • Kodu beğenmediysen <b>✨ AI ile Oluştur</b> ile doğal dilden ürettir.</p>
@@ -347,12 +362,12 @@
   <div id="theme-modal" class="modal hidden">
     <div class="modal-box theme-box">
       <div class="modal-head">
-        <span>🎨 Tema Seç</span>
+        <span data-i18n="theme_title">🎨 Tema Seç</span>
         <button id="theme-close" title="Kapat">✕</button>
       </div>
       <div id="theme-grid"></div>
       <div class="modal-actions" style="justify-content:flex-end">
-        <button id="theme-ok" style="background:#6f6bff;color:#fff;border:none;border-radius:6px;padding:8px 26px;font-size:14px;cursor:pointer">Tamam</button>
+        <button id="theme-ok" data-i18n="btn_ok" style="background:#6f6bff;color:#fff;border:none;border-radius:6px;padding:8px 26px;font-size:14px;cursor:pointer">Tamam</button>
       </div>
     </div>
   </div>

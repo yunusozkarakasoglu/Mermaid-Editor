@@ -68,6 +68,8 @@ const DEFAULTS = {
   apiKey: '',
   baseUrl: 'https://api.deepseek.com',
   model: 'deepseek-chat',
+  lang: 'tr',
+  theme: 'default',
 };
 
 function readSettings() {
@@ -137,10 +139,11 @@ const AI_SYSTEM_PROMPT =
   'Kurallar:\n' +
   '- SADECE ham Mermaid kaynak kodunu çıkar. Markdown code fence yok, açıklama yok, yorum yok.\n' +
   '- İsteğe en uygun diyagram tipini seç (flowchart, sequenceDiagram, classDiagram, stateDiagram-v2, erDiagram, gantt, mindmap, pie, gitGraph vb.).\n' +
-  '- Etiketler kullanıcının dilinde olsun.\n' +
   '- Düğüm etiketleri kısa ve anlaşılır olsun.';
 
-ipcMain.handle('ai-generate', async (_e, prompt) => {
+const LANG_NAMES = { tr: 'Turkish', en: 'English', ru: 'Russian' };
+
+ipcMain.handle('ai-generate', async (_e, prompt, lang) => {
   const s = readSettings();
   if (!s.apiKey) return { ok: false, error: 'API anahtarı ayarlanmamış.' };
   if (!prompt || !prompt.trim()) return { ok: false, error: 'Açıklama boş.' };
@@ -155,7 +158,7 @@ ipcMain.handle('ai-generate', async (_e, prompt) => {
       body: JSON.stringify({
         model: s.model || DEFAULTS.model,
         messages: [
-          { role: 'system', content: AI_SYSTEM_PROMPT },
+          { role: 'system', content: AI_SYSTEM_PROMPT + '\n- Tüm düğüm ve kenar etiketleri ' + (LANG_NAMES[lang] || 'Turkish') + ' dilinde olsun.' },
           { role: 'user', content: prompt },
         ],
         temperature: 0.7,

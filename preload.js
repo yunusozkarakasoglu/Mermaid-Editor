@@ -10,7 +10,7 @@ contextBridge.exposeInMainWorld('api', {
   exportPng: (dataUrl, src) => ipcRenderer.invoke('export-png', dataUrl, src),
   getSettings: () => ipcRenderer.invoke('get-settings'),
   saveSettings: (s) => ipcRenderer.invoke('save-settings', s),
-  aiGenerate: (prompt) => ipcRenderer.invoke('ai-generate', prompt),
+  aiGenerate: (prompt, lang) => ipcRenderer.invoke('ai-generate', prompt, lang),
   openSettingsFile: () => ipcRenderer.invoke('open-settings-file'),
   aiTest: () => ipcRenderer.invoke('ai-test'),
   listTemplates: () => ipcRenderer.invoke('list-templates'),

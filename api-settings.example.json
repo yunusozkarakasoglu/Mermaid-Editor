@@ -2,5 +2,7 @@
   "provider": "deepseek",
   "apiKey": "sk-...",
   "baseUrl": "https://api.deepseek.com",
-  "model": "deepseek-chat"
+  "model": "deepseek-chat",
+  "lang": "tr",
+  "theme": "default"
 }

@@ -9,6 +9,175 @@ let lastSvgError = null;
 let themeIndex = 0;
 const THEMES = ['default', 'dark', 'forest', 'neutral', 'modern'];
 
+// ----- Dil desteği (tr / en / ru) -----
+const I18N = {
+  tr: {
+    btn_new: 'Yeni', btn_open: 'Aç…', btn_save: 'Kaydet', btn_saveas: 'Farklı kaydet…',
+    btn_export_svg: 'SVG indir', btn_export_png: 'PNG indir', btn_templates: '📁 Şablonlar',
+    btn_theme: '🎨 Tema', btn_ai: '✨ AI ile Oluştur',
+    pane_editor: 'Editör', pane_preview: 'Önizleme',
+    ph_editor: 'Mermaid kodu yaz veya yapıştır…\nörn: flowchart TD\n  A[Başla] --> B[Bitir]',
+    hint_preview: 'Diyagram burada canlı görünecek',
+    theme_title: '🎨 Tema Seç', btn_ok: 'Tamam',
+    theme_default: 'Varsayılan', theme_dark: 'Koyu', theme_forest: 'Orman', theme_neutral: 'Nötr', theme_modern: 'Modern',
+    ai_settings_title: '🔑 API Ayarı',
+    ai_settings_warn: '⚠️ <b>API bulunamadı.</b> Diyagram üretimi için önce API anahtarını ayarla.',
+    ai_guide_summary: 'Yönergeler &amp; örnek dosya',
+    ai_guide_steps: '1. Seçtiğin sağlayıcının sitesinden API key al (örn. DeepSeek: <a href="https://platform.deepseek.com" style="color:#89b4fa">platform.deepseek.com</a>, sk-...).<br>2. Aşağıdaki formu doldurup <b>Kaydet</b>\'e bas, ya da <b>Auth dosyası aç</b> ile dosyayı elle düzenle.<br>3. Sonra <b>Test et</b> ile bağlantıyı doğrula — başarılıysa AI penceresi açılır.',
+    ai_lbl_provider: 'Sağlayıcı', ai_lbl_key: 'API Anahtarı', ai_lbl_baseurl: 'Base URL', ai_lbl_model: 'Model',
+    btn_open_file: '📄 Auth dosyası aç', btn_test: '🔌 Test et',
+    ai_task_title: '✨ AI ile Oluştur',
+    ph_ai_prompt: 'Diyagramı anlat… örn: Kullanıcı giriş akışı: e-posta ve şifre doğrula, token üret, dashboard\'a yönlendir',
+    btn_generate: '✨ Oluştur', btn_apply: '📥 Editöre Aktar',
+    ph_ai_code: 'Üretilen mermaid kodu buraya gelir…',
+    hint_ai_preview: 'Diyagram burada görünecek',
+    tmpl_title: '📁 Şablonlar',
+    info_title: '📘 Mermaid Yazım Kılavuzu',
+    btn_editor_load: '✏️ Editöre al',
+    info_h1: '1. Akış Şeması (Flowchart)',
+    info_p1: '<code>TD</code> = yukarıdan aşağı, <code>LR</code> = soldan sağa. Düğüm şekilleri: <code>[ ]</code> dikdörtgen, <code>{ }</code> karar, <code>( )</code> yuvarlak, <code>(( ))</code> daire. Kenarlar: <code>--&gt;</code> ok, <code>---</code> çizgi, <code>-.→</code> kesikli, <code>==&gt;</code> kalın. Kenar etiketi: <code>--&gt;|metin|</code>',
+    info_h2: '2. Sıralama Diyagramı (Sequence)',
+    info_p2: '<code>-&gt;&gt;</code> düz mesaj, <code>--&gt;&gt;</code> kesikli yanıt, <code>Note over</code> ile açıklama.',
+    info_h3: '3. Sınıf Diyagramı (Class)',
+    info_p3: 'Kalıtım: <code>&lt;|--</code>, uygulama: <code>..|&gt;</code>, ilişki: <code>--</code>, kompozisyon: <code>*--</code>',
+    info_h4: '4. Durum Diyagramı (State)',
+    info_h5: '5. Varlık İlişki Diyagramı (ER)',
+    info_p4: 'Kardinalite: <code>||--o{</code> (bir-çok), <code>||--||</code> (bir-bir), <code>}o--o{</code> (çok-çok)',
+    info_h6: '6. Gantt (Zaman Çizelgesi)',
+    info_h7: '7. Zihin Haritası (Mindmap) &amp; Pasta (Pie)',
+    info_tip_title: 'İpucu',
+    info_tips: '• Düğüm etiketleri kısa tut, karmaşık açıklamaları kenar etiketlerine yaz.<br>• <code>subgraph</code> ile gruplar oluştur.<br>• Koyu tema için sağ üstteki <b>🎨 Tema</b> butonunu kullan.<br>• Kodu beğenmediysen <b>✨ AI ile Oluştur</b> ile doğal dilden ürettir.',
+    err_file_read: 'Dosya okunamadı: ', err_save: 'Kaydedilemedi: ',
+    warn_need_diagram: 'Önce geçerli bir diyagram oluştur.',
+    svg_saved: 'SVG kaydedildi: ', png_saved: 'PNG kaydedildi: ', png_fail: 'PNG üretilemedi: ',
+    ai_err_empty_prompt: 'Önce diyagramı anlat.', ai_generating: 'Oluşturuluyor…', ai_err: 'Hata: ',
+    ai_saved: '✓ kaydedildi', ai_file_opened: 'Dosya açıldı.', ai_file_fail: 'Açılamadı: ',
+    ai_testing: 'Test ediliyor…', ai_test_ok: '✓ Bağlantı OK (', ai_test_ms: 'ms, ',
+    tmpl_loading: 'Şablonlar yükleniyor…', tmpl_err_read: '⚠️ Şablonlar okunamadı: ',
+    tmpl_empty: '📁 Şablon klasöründe .mmd dosyası yok.', tmpl_dir: 'Klasör: ', tmpl_render_err: 'render hatası', tmpl_use: '📥 Kullan',
+  },
+  en: {
+    btn_new: 'New', btn_open: 'Open…', btn_save: 'Save', btn_saveas: 'Save As…',
+    btn_export_svg: 'Export SVG', btn_export_png: 'Export PNG', btn_templates: '📁 Templates',
+    btn_theme: '🎨 Theme', btn_ai: '✨ Create with AI',
+    pane_editor: 'Editor', pane_preview: 'Preview',
+    ph_editor: 'Write or paste Mermaid code…\ne.g. flowchart TD\n  A[Start] --> B[End]',
+    hint_preview: 'Your diagram will appear here live',
+    theme_title: '🎨 Select Theme', btn_ok: 'OK',
+    theme_default: 'Default', theme_dark: 'Dark', theme_forest: 'Forest', theme_neutral: 'Neutral', theme_modern: 'Modern',
+    ai_settings_title: '🔑 API Settings',
+    ai_settings_warn: '⚠️ <b>No API found.</b> Set up an API key first to generate diagrams.',
+    ai_guide_summary: 'Instructions & example file',
+    ai_guide_steps: '1. Get an API key from your provider (e.g. DeepSeek: <a href="https://platform.deepseek.com" style="color:#89b4fa">platform.deepseek.com</a>, sk-...).<br>2. Fill in the form and press <b>Save</b>, or use <b>Open auth file</b> to edit it directly.<br>3. Then press <b>Test</b> to verify the connection — if OK, the AI window opens.',
+    ai_lbl_provider: 'Provider', ai_lbl_key: 'API Key', ai_lbl_baseurl: 'Base URL', ai_lbl_model: 'Model',
+    btn_open_file: '📄 Open auth file', btn_test: '🔌 Test',
+    ai_task_title: '✨ Create with AI',
+    ph_ai_prompt: 'Describe the diagram… e.g. User login flow: validate email and password, generate token, redirect to dashboard',
+    btn_generate: '✨ Generate', btn_apply: '📥 Apply to Editor',
+    ph_ai_code: 'Generated Mermaid code appears here…',
+    hint_ai_preview: 'Your diagram will appear here',
+    tmpl_title: '📁 Templates',
+    info_title: '📘 Mermaid Guide',
+    btn_editor_load: '✏️ Load into editor',
+    info_h1: '1. Flowchart',
+    info_p1: '<code>TD</code> = top-down, <code>LR</code> = left-right. Node shapes: <code>[ ]</code> rectangle, <code>{ }</code> decision, <code>( )</code> rounded, <code>(( ))</code> circle. Edges: <code>--&gt;</code> arrow, <code>---</code> line, <code>-.→</code> dotted, <code>==&gt;</code> thick. Edge label: <code>--&gt;|text|</code>',
+    info_h2: '2. Sequence Diagram',
+    info_p2: '<code>-&gt;&gt;</code> direct message, <code>--&gt;&gt;</code> dotted reply, <code>Note over</code> for notes.',
+    info_h3: '3. Class Diagram',
+    info_p3: 'Inheritance: <code>&lt;|--</code>, implementation: <code>..|&gt;</code>, association: <code>--</code>, composition: <code>*--</code>',
+    info_h4: '4. State Diagram',
+    info_h5: '5. ER Diagram',
+    info_p4: 'Cardinality: <code>||--o{</code> (one-to-many), <code>||--||</code> (one-to-one), <code>}o--o{</code> (many-to-many)',
+    info_h6: '6. Gantt',
+    info_h7: '7. Mindmap & Pie',
+    info_tip_title: 'Tips',
+    info_tips: '• Keep node labels short; put longer explanations in edge labels.<br>• Use <code>subgraph</code> to group nodes.<br>• Use <b>🎨 Theme</b> (top right) for dark mode.<br>• Don\'t like the code? Generate it with <b>✨ Create with AI</b>.',
+    err_file_read: 'Could not read file: ', err_save: 'Could not save: ',
+    warn_need_diagram: 'Generate a valid diagram first.',
+    svg_saved: 'SVG saved: ', png_saved: 'PNG saved: ', png_fail: 'Could not generate PNG: ',
+    ai_err_empty_prompt: 'Describe the diagram first.',
+    ai_generating: 'Generating…', ai_err: 'Error: ',
+    ai_saved: '✓ saved', ai_file_opened: 'File opened.', ai_file_fail: 'Could not open: ',
+    ai_testing: 'Testing…', ai_test_ok: '✓ Connection OK (', ai_test_ms: 'ms, ',
+    tmpl_loading: 'Loading templates…', tmpl_err_read: '⚠️ Could not read templates: ',
+    tmpl_empty: '📁 No .mmd files in the templates folder.', tmpl_dir: 'Folder: ', tmpl_render_err: 'render error', tmpl_use: '📥 Use',
+  },
+  ru: {
+    btn_new: 'Новый', btn_open: 'Открыть…', btn_save: 'Сохранить', btn_saveas: 'Сохранить как…',
+    btn_export_svg: 'Экспорт SVG', btn_export_png: 'Экспорт PNG', btn_templates: '📁 Шаблоны',
+    btn_theme: '🎨 Тема', btn_ai: '✨ Создать с ИИ',
+    pane_editor: 'Редактор', pane_preview: 'Просмотр',
+    ph_editor: 'Введите или вставьте код Mermaid…\nнапр.: flowchart TD\n  A[Начало] --> B[Конец]',
+    hint_preview: 'Диаграмма появится здесь',
+    theme_title: '🎨 Выбор темы', btn_ok: 'ОК',
+    theme_default: 'По умолчанию', theme_dark: 'Тёмная', theme_forest: 'Лес', theme_neutral: 'Нейтральная', theme_modern: 'Современная',
+    ai_settings_title: '🔑 Настройка API',
+    ai_settings_warn: '⚠️ <b>API не найден.</b> Сначала настройте API-ключ для создания диаграмм.',
+    ai_guide_summary: 'Инструкции и пример файла',
+    ai_guide_steps: '1. Получите API-ключ у провайдера (напр. DeepSeek: <a href="https://platform.deepseek.com" style="color:#89b4fa">platform.deepseek.com</a>, sk-...).<br>2. Заполните форму и нажмите <b>Сохранить</b>, или откройте файл авторизации через <b>Открыть файл авторизации</b>.<br>3. Затем нажмите <b>Проверить</b> — если всё OK, откроется окно ИИ.',
+    ai_lbl_provider: 'Провайдер', ai_lbl_key: 'API-ключ', ai_lbl_baseurl: 'Base URL', ai_lbl_model: 'Модель',
+    btn_open_file: '📄 Открыть файл авторизации', btn_test: '🔌 Проверить',
+    ai_task_title: '✨ Создать с ИИ',
+    ph_ai_prompt: 'Опишите диаграмму… напр.: поток входа пользователя: проверка e-mail и пароля, генерация токена, переход на панель',
+    btn_generate: '✨ Создать', btn_apply: '📥 В редактор',
+    ph_ai_code: 'Сгенерированный код Mermaid появится здесь…',
+    hint_ai_preview: 'Диаграмма появится здесь',
+    tmpl_title: '📁 Шаблоны',
+    info_title: '📘 Руководство по Mermaid',
+    btn_editor_load: '✏️ Загрузить в редактор',
+    info_h1: '1. Блок-схема (Flowchart)',
+    info_p1: '<code>TD</code> — сверху вниз, <code>LR</code> — слева направо. Формы узлов: <code>[ ]</code> прямоугольник, <code>{ }</code> решение, <code>( )</code> скруглённый, <code>(( ))</code> круг. Рёбра: <code>--&gt;</code> стрелка, <code>---</code> линия, <code>-.→</code> пунктир, <code>==&gt;</code> жирный. Подпись ребра: <code>--&gt;|текст|</code>',
+    info_h2: '2. Диаграмма последовательности',
+    info_p2: '<code>-&gt;&gt;</code> прямое сообщение, <code>--&gt;&gt;</code> пунктирный ответ, <code>Note over</code> для заметок.',
+    info_h3: '3. Диаграмма классов',
+    info_p3: 'Наследование: <code>&lt;|--</code>, реализация: <code>..|&gt;</code>, ассоциация: <code>--</code>, композиция: <code>*--</code>',
+    info_h4: '4. Диаграмма состояний',
+    info_h5: '5. ER-диаграмма',
+    info_p4: 'Кардинальность: <code>||--o{</code> (один-ко-многим), <code>||--||</code> (один-к-одному), <code>}o--o{</code> (многие-ко-многим)',
+    info_h6: '6. Гант',
+    info_h7: '7. Интеллект-карта и диаграмма',
+    info_tip_title: 'Советы',
+    info_tips: '• Держите подписи узлов краткими; длинные пояснения — в подписях рёбер.<br>• Используйте <code>subgraph</code> для группировки.<br>• Для тёмной темы — кнопка <b>🎨 Тема</b> справа сверху.<br>• Не нравится код? Создайте его с <b>✨ Создать с ИИ</b>.',
+    err_file_read: 'Не удалось прочитать файл: ', err_save: 'Не удалось сохранить: ',
+    warn_need_diagram: 'Сначала создайте корректную диаграмму.',
+    svg_saved: 'SVG сохранён: ', png_saved: 'PNG сохранён: ', png_fail: 'Не удалось создать PNG: ',
+    ai_err_empty_prompt: 'Сначала опишите диаграмму.',
+    ai_generating: 'Генерация…', ai_err: 'Ошибка: ',
+    ai_saved: '✓ сохранено', ai_file_opened: 'Файл открыт.', ai_file_fail: 'Не удалось открыть: ',
+    ai_testing: 'Проверка…', ai_test_ok: '✓ Соединение OK (', ai_test_ms: 'мс, ',
+    tmpl_loading: 'Загрузка шаблонов…', tmpl_err_read: '⚠️ Не удалось прочитать шаблоны: ',
+    tmpl_empty: '📁 В папке шаблонов нет файлов .mmd.', tmpl_dir: 'Папка: ', tmpl_render_err: 'ошибка рендера', tmpl_use: '📥 Использовать',
+  },
+};
+
+let currentLang = localStorage.getItem('app-lang') || 'tr';
+const T = (key) => I18N[currentLang][key] ?? I18N.tr[key] ?? key;
+
+function applyLang() {
+  document.querySelectorAll('[data-i18n]').forEach((el) => {
+    const v = T(el.dataset.i18n);
+    if (v !== undefined) el.innerHTML = v;
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach((el) => {
+    const v = T(el.dataset.i18nPh);
+    if (v !== undefined) el.placeholder = v;
+  });
+}
+
+const langSelect = document.getElementById('lang-select');
+langSelect.value = currentLang;
+langSelect.addEventListener('change', async () => {
+  currentLang = langSelect.value;
+  applyLang();
+  renderPreview();
+  // Dil seçimini ayar dosyasında kalıcı yap
+  const s = await window.api.getSettings().catch(() => null);
+  const merged = { ...(s || {}), lang: currentLang };
+  aiSettings = merged;
+  await window.api.saveSettings(merged).catch(() => null);
+});
+applyLang();
+
 function setTheme() {
   const theme = THEMES[themeIndex % THEMES.length];
   mermaid.initialize({ startOnLoad: false, theme, securityLevel: 'loose', htmlLabels: false, fontFamily: 'system-ui' });
@@ -294,6 +463,12 @@ function selectTheme(t) {
   themeIndex = THEMES.indexOf(t);
   setTheme(); // seçim anında uygula
   highlightThemeCards();
+  // Tema seçimini ayar dosyasında kalıcı yap
+  window.api.getSettings().then((s) => {
+    const merged = { ...(s || {}), theme: t };
+    aiSettings = merged;
+    return window.api.saveSettings(merged).catch(() => null);
+  });
 }
 
 document.getElementById('btn-theme').onclick = openThemeModal;
@@ -447,7 +622,7 @@ document.getElementById('ai-generate').onclick = async () => {
   aiStatus.textContent = 'Oluşturuluyor…';
   aiError.textContent = '';
   try {
-    const res = await window.api.aiGenerate(prompt);
+    const res = await window.api.aiGenerate(prompt, currentLang);
     if (res.ok) {
       aiCodeEl.value = res.code;
       renderAiPreview();
@@ -476,4 +651,17 @@ document.getElementById('ai-apply').onclick = () => {
 
 // başlangıç
 setTheme();
-window.api.getSettings().then((s) => { aiSettings = s; });
+window.api.getSettings().then((s) => {
+  aiSettings = s || {};
+  // Kayıtlı dili uygula
+  if (s?.lang && I18N[s.lang]) {
+    currentLang = s.lang;
+    langSelect.value = s.lang;
+    applyLang();
+  }
+  // Kayıtlı temayı uygula
+  if (s?.theme && THEMES.includes(s.theme)) {
+    themeIndex = THEMES.indexOf(s.theme);
+    setTheme();
+  }
+});
