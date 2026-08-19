@@ -244,7 +244,9 @@ function applyProviderDefaults(keepSaved) {
   document.getElementById('ai-model').value = keepSaved && aiSettings?.model ? aiSettings.model : p.model;
 }
 
-function showAiModal() {
+async function showAiModal() {
+  // Her açılışta ayarları dosyadan taze oku (dışarıdan düzenlenmiş olabilir)
+  aiSettings = await window.api.getSettings().catch(() => null);
   aiModal.classList.remove('hidden');
   aiError.textContent = '';
   refreshAiState();
