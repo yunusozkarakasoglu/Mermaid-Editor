@@ -13,4 +13,5 @@ contextBridge.exposeInMainWorld('api', {
   aiGenerate: (prompt) => ipcRenderer.invoke('ai-generate', prompt),
   openSettingsFile: () => ipcRenderer.invoke('open-settings-file'),
   aiTest: () => ipcRenderer.invoke('ai-test'),
+  listTemplates: () => ipcRenderer.invoke('list-templates'),
 });

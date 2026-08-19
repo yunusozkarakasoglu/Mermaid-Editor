@@ -73,3 +73,9 @@ Bu proje aşağıdaki açık kaynak projelerden yararlanır / ilham alır:
 - **[lukilabs/beautiful-mermaid](https://github.com/lukilabs/beautiful-mermaid)** — Tema ve görsel estetik araştırması.
 
 > 💡 **API ayarını değiştirmek:** `api-settings.json` dosyasını sil — uygulama bir sonraki açılışta ayar ekranını gösterir.
+
+## Şablonlar
+
+**📁 Şablonlar** butonu, şablon klasöründeki `.mmd` dosyalarını kod + canlı önizleme olarak gösterir; **📥 Kullan** ile editöre yükler.
+
+Şablon klasörü `main.js` içindeki `TEMPLATES_DIR` sabitidir (varsayılan: `~/Masaüstü/İsimsiz Dizin`). Kendi bilgisayarında değiştirmek için bu sabiti düzenle.

@@ -138,6 +138,7 @@ window.addEventListener('keydown', (e) => {
     if (!aiTaskModal.classList.contains('hidden')) aiTaskModal.classList.add('hidden');
     if (!themeModal.classList.contains('hidden')) themeModal.classList.add('hidden');
     if (!infoModal.classList.contains('hidden')) infoModal.classList.add('hidden');
+    if (!tmplModal.classList.contains('hidden')) tmplModal.classList.add('hidden');
   }
 });
 
@@ -149,6 +150,57 @@ window.addEventListener('beforeunload', (e) => {
 });
 
 window.api.onOpenFile((p) => loadFile(p));
+
+// ----- Şablonlar -----
+const tmplModal = document.getElementById('tmpl-modal');
+const tmplBody = document.getElementById('tmpl-body');
+
+async function openTmplModal() {
+  tmplModal.classList.remove('hidden');
+  tmplBody.innerHTML = '<div style="color:#6c7086;font-size:13px">Şablonlar yükleniyor…</div>';
+  const res = await window.api.listTemplates();
+  if (!res.ok) {
+    tmplBody.innerHTML = '<div class="tmpl-empty">⚠️ Şablonlar okunamadı: ' + esc(res.error || 'bilinmiyor') + '</div>';
+    return;
+  }
+  if (res.templates.length === 0) {
+    tmplBody.innerHTML = '<div class="tmpl-empty">📁 Şablon klasöründe .mmd dosyası yok.<br><span class="tmpl-path">Klasör: ' + esc(res.dir) + '</span></div>';
+    return;
+  }
+  tmplBody.innerHTML = '';
+  for (const tpl of res.templates) {
+    const item = document.createElement('div');
+    item.innerHTML =
+      '<div class="tmpl-name">' + esc(tpl.name) + '</div>' +
+      '<div class="info-example">' +
+      '  <div class="info-code">' +
+      '    <pre><code></code></pre>' +
+      '    <button class="info-load tmpl-use">📥 Kullan</button>' +
+      '  </div>' +
+      '  <div class="info-preview"></div>' +
+      '</div>';
+    item.querySelector('code').textContent = tpl.content;
+    item.querySelector('.tmpl-use').onclick = () => {
+      editor.value = tpl.content;
+      dirty = true;
+      tmplModal.classList.add('hidden');
+      renderPreview();
+    };
+    tmplBody.appendChild(item);
+    const pv = item.querySelector('.info-preview');
+    try {
+      const id = 'tp-' + Math.random().toString(36).slice(2);
+      const { svg } = await mermaid.render(id, tpl.content);
+      pv.innerHTML = svg;
+    } catch {
+      pv.innerHTML = '<span style="color:#f38ba8;font-size:12px">render hatası</span>';
+    }
+  }
+}
+
+document.getElementById('btn-templates').onclick = openTmplModal;
+document.getElementById('tmpl-close').onclick = () => tmplModal.classList.add('hidden');
+tmplModal.addEventListener('click', (e) => { if (e.target === tmplModal) tmplModal.classList.add('hidden'); });
 
 // ----- Mermaid yazım kılavuzu (ⓘ) -----
 const infoModal = document.getElementById('info-modal');

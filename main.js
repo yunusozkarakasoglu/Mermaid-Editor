@@ -176,6 +176,30 @@ ipcMain.handle('ai-generate', async (_e, prompt) => {
   }
 });
 
+// ---------- Şablonlar ----------
+// Şablon klasörü: buraya .mmd dosyaları koy, uygulamadaki Şablonlar popup'ında görünsün
+const TEMPLATES_DIR = '/home/yunus/Masaüstü/İsimsiz Dizin';
+
+ipcMain.handle('list-templates', () => {
+  try {
+    if (!fs.existsSync(TEMPLATES_DIR)) return { ok: true, templates: [], dir: TEMPLATES_DIR };
+    const files = fs.readdirSync(TEMPLATES_DIR)
+      .filter((f) => /\.(mmd|mermaid)$/i.test(f))
+      .sort();
+    const templates = files.map((f) => {
+      const full = path.join(TEMPLATES_DIR, f);
+      return {
+        name: f.replace(/\.(mmd|mermaid)$/i, ''),
+        path: full,
+        content: fs.readFileSync(full, 'utf8'),
+      };
+    });
+    return { ok: true, templates, dir: TEMPLATES_DIR };
+  } catch (err) {
+    return { ok: false, error: String(err), dir: TEMPLATES_DIR };
+  }
+});
+
 // ---------- IPC ----------
 ipcMain.handle('read-file', (_e, p) => {
   try {

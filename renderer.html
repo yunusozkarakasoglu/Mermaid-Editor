@@ -102,6 +102,10 @@
   .info-preview svg { max-width: 100%; height: auto; }
   .info-load { background: #313244; color: #cdd6f4; border: none; border-radius: 5px; padding: 4px 12px; font-size: 12px; cursor: pointer; }
   .info-load:hover { background: #45475a; }
+  /* Şablonlar */
+  .tmpl-name { color: #89b4fa; font-size: 13px; font-weight: 600; margin: 16px 0 6px; }
+  .tmpl-empty { color: #f9e2af; background: #3b2b10; border: 1px solid #8a6d3b; border-radius: 8px; padding: 10px 12px; font-size: 13px; }
+  .tmpl-path { color: #6c7086; font-size: 11.5px; margin-top: 4px; }
 </style>
 </head>
 <body>
@@ -112,7 +116,8 @@
     <button id="btn-saveas">Farklı kaydet…</button>
     <button id="btn-export-svg">SVG indir</button>
     <button id="btn-export-png">PNG indir</button>
-    <button id="btn-theme" style="margin-left:auto">🎨 Tema</button>
+    <button id="btn-templates" style="margin-left:auto">📁 Şablonlar</button>
+    <button id="btn-theme">🎨 Tema</button>
     <button id="btn-ai">✨ AI ile Oluştur</button>
   </div>
   <div id="main">
@@ -199,6 +204,17 @@
         </div>
       </div>
       <div id="ai-error"></div>
+    </div>
+  </div>
+
+  <!-- Şablonlar modalı -->
+  <div id="tmpl-modal" class="modal hidden">
+    <div class="modal-box info-box">
+      <div class="modal-head">
+        <span>📁 Şablonlar</span>
+        <button id="tmpl-close" title="Kapat">✕</button>
+      </div>
+      <div class="info-body" id="tmpl-body"></div>
     </div>
   </div>
 
