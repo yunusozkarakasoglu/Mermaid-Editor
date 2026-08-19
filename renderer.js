@@ -330,18 +330,22 @@ window.api.onOpenFile((p) => loadFile(p));
 const tmplModal = document.getElementById('tmpl-modal');
 const tmplBody = document.getElementById('tmpl-body');
 
+// Şablon önizlemeleri — içerik değişmediyse cache'ten kullan
+let tmplCache = null; // { sig, htmls: {name: html} }
 async function openTmplModal() {
   tmplModal.classList.remove('hidden');
-  tmplBody.innerHTML = '<div style="color:#6c7086;font-size:13px">Şablonlar yükleniyor…</div>';
+  tmplBody.innerHTML = '<div style="color:#6c7086;font-size:13px">' + T('tmpl_loading') + '</div>';
   const res = await window.api.listTemplates();
   if (!res.ok) {
-    tmplBody.innerHTML = '<div class="tmpl-empty">⚠️ Şablonlar okunamadı: ' + esc(res.error || 'bilinmiyor') + '</div>';
+    tmplBody.innerHTML = '<div class="tmpl-empty">' + T('tmpl_err_read') + esc(res.error || '') + '</div>';
     return;
   }
   if (res.templates.length === 0) {
-    tmplBody.innerHTML = '<div class="tmpl-empty">📁 Şablon klasöründe .mmd dosyası yok.<br><span class="tmpl-path">Klasör: ' + esc(res.dir) + '</span></div>';
+    tmplBody.innerHTML = '<div class="tmpl-empty">' + T('tmpl_empty') + '<br><span class="tmpl-path">' + T('tmpl_dir') + esc(res.dir) + '</span></div>';
     return;
   }
+  const sig = res.templates.map((t) => t.name + '|' + t.content.length).join('\n');
+  const same = tmplCache && tmplCache.sig === sig;
   tmplBody.innerHTML = '';
   for (const tpl of res.templates) {
     const item = document.createElement('div');
@@ -350,7 +354,7 @@ async function openTmplModal() {
       '<div class="info-example">' +
       '  <div class="info-code">' +
       '    <pre><code></code></pre>' +
-      '    <button class="info-load tmpl-use">📥 Kullan</button>' +
+      '    <button class="info-load tmpl-use">' + T('tmpl_use') + '</button>' +
       '  </div>' +
       '  <div class="info-preview"></div>' +
       '</div>';
@@ -363,14 +367,21 @@ async function openTmplModal() {
     };
     tmplBody.appendChild(item);
     const pv = item.querySelector('.info-preview');
-    try {
-      const id = 'tp-' + Math.random().toString(36).slice(2);
-      const { svg } = await mermaid.render(id, tpl.content);
-      pv.innerHTML = svg;
-    } catch {
-      pv.innerHTML = '<span style="color:#f38ba8;font-size:12px">render hatası</span>';
+    if (same && tmplCache.htmls[tpl.name] !== undefined) {
+      pv.innerHTML = tmplCache.htmls[tpl.name];
+    } else {
+      let html = '<span style="color:#f38ba8;font-size:12px">' + T('tmpl_render_err') + '</span>';
+      try {
+        const id = 'tp-' + Math.random().toString(36).slice(2);
+        const r = await mermaid.render(id, tpl.content);
+        html = r.svg;
+      } catch {}
+      pv.innerHTML = html;
+      if (!tmplCache) tmplCache = { sig, htmls: {} };
+      tmplCache.htmls[tpl.name] = html;
     }
   }
+  if (!same && tmplCache) tmplCache.sig = sig;
 }
 
 document.getElementById('btn-templates').onclick = openTmplModal;
@@ -411,24 +422,45 @@ const INFO_EXAMPLES = {
 };
 
 // Modal açılınca her örneğin canlı önizlemesini çiz (mevcut temayla)
+// Kılavuz önizlemeleri — tema değişmediyse cache'ten kullan
+let infoPreviewCache = { theme: null, htmls: {} };
+let infoPreviewsStarted = false;
+
+async function ensureInfoPreviews() {
+  if (!infoPreviewsStarted) {
+    infoPreviewsStarted = true;
+    await renderInfoPreviews();
+  }
+}
+
 async function renderInfoPreviews() {
+  const theme = THEMES[themeIndex % THEMES.length];
+  if (infoPreviewCache.theme === theme) {
+    for (const [key, html] of Object.entries(infoPreviewCache.htmls)) {
+      const box = document.querySelector(`.info-preview[data-preview="${key}"]`);
+      if (box) box.innerHTML = html;
+    }
+    return;
+  }
+  const htmls = {};
   for (const [key, code] of Object.entries(INFO_EXAMPLES)) {
     const box = document.querySelector(`.info-preview[data-preview="${key}"]`);
     if (!box) continue;
-    box.innerHTML = '';
+    let html = '<span style="color:#6c7086;font-size:12px">—</span>';
     try {
       const id = 'ip-' + key + '-' + Math.random().toString(36).slice(2);
-      const { svg } = await mermaid.render(id, code);
-      box.innerHTML = svg;
-    } catch {
-      box.innerHTML = '<span style="color:#6c7086;font-size:12px">—</span>';
-    }
+      const r = await mermaid.render(id, code);
+      html = r.svg;
+    } catch {}
+    box.innerHTML = html;
+    htmls[key] = html;
   }
+  infoPreviewCache = { theme, htmls };
 }
 
 document.getElementById('btn-info').onclick = () => {
   infoModal.classList.remove('hidden');
-  renderInfoPreviews();
+  ensureInfoPreviews();
 };
 document.getElementById('info-close').onclick = () => infoModal.classList.add('hidden');
 infoModal.addEventListener('click', (e) => { if (e.target === infoModal) infoModal.classList.add('hidden'); });
@@ -446,12 +478,41 @@ document.querySelectorAll('.info-load').forEach((btn) => {
 // ----- Tema seçimi (resimli önizleme popup'ı) -----
 const themeModal = document.getElementById('theme-modal');
 const themeGrid = document.getElementById('theme-grid');
-const THEME_LABELS = { default: 'Varsayılan', dark: 'Koyu', forest: 'Orman', neutral: 'Nötr', modern: 'Modern' };
+
+let themePreviewCache = null; // [{theme, label, svg}] — tema bağımsız, oturum boyunca sabit
+let themePreviewsStarted = false;
+
+async function ensureThemePreviews() {
+  if (!themePreviewCache && !themePreviewsStarted) {
+    themePreviewsStarted = true;
+    await renderThemePreviews();
+  }
+}
 
 async function openThemeModal() {
-  await renderThemePreviews();
+  await ensureThemePreviews();
+  if (themePreviewCache) buildThemeCards();
   highlightThemeCards();
   themeModal.classList.remove('hidden');
+}
+
+// Arka planda ön-render: ilk tema açılışı da anında olsun
+setTimeout(() => ensureThemePreviews(), 2000);
+// Kılavuz önizlemelerini de arka planda hazırla
+setTimeout(() => ensureInfoPreviews(), 3500);
+
+function buildThemeCards() {
+  themeGrid.innerHTML = '';
+  for (const c of themePreviewCache) {
+    const card = document.createElement('div');
+    card.className = 'theme-card';
+    card.dataset.theme = c.theme;
+    card.innerHTML = '<div class="theme-name"></div><div class="theme-preview"></div>';
+    card.querySelector('.theme-name').textContent = c.label;
+    card.querySelector('.theme-preview').innerHTML = c.svg;
+    card.onclick = () => selectTheme(c.theme);
+    themeGrid.appendChild(card);
+  }
 }
 
 function highlightThemeCards() {
@@ -464,22 +525,25 @@ function highlightThemeCards() {
 async function renderThemePreviews() {
   const sample = 'flowchart TD\n  A[Başla] --> B{Karar}\n  B -->|Evet| C[İşlem]\n  B -->|Hayır| D[Bitir]';
   themeGrid.innerHTML = '';
+  themePreviewCache = [];
   for (const t of THEMES) {
     mermaid.initialize({ startOnLoad: false, theme: t, securityLevel: 'loose', htmlLabels: false, fontFamily: 'system-ui' });
     const card = document.createElement('div');
     card.className = 'theme-card';
     card.dataset.theme = t;
-    card.innerHTML = '<div class="theme-name">' + (THEME_LABELS[t] || t) + '</div><div class="theme-preview"></div>';
+    card.innerHTML = '<div class="theme-name"></div><div class="theme-preview"></div>';
+    card.querySelector('.theme-name').textContent = T('theme_' + t);
     card.onclick = () => selectTheme(t);
     themeGrid.appendChild(card);
     const pv = card.querySelector('.theme-preview');
+    let svg = '<span style="color:#6c7086;font-size:12px">—</span>';
     try {
       const id = 'th-' + t + '-' + Math.random().toString(36).slice(2);
-      const { svg } = await mermaid.render(id, sample);
+      const r = await mermaid.render(id, sample);
+      svg = r.svg;
       pv.innerHTML = svg;
-    } catch {
-      pv.innerHTML = '<span style="color:#6c7086;font-size:12px">—</span>';
-    }
+    } catch {}
+    themePreviewCache.push({ theme: t, label: T('theme_' + t), svg });
   }
   // Ana temayı geri yükle
   mermaid.initialize({ startOnLoad: false, theme: THEMES[themeIndex % THEMES.length], securityLevel: 'loose', htmlLabels: false, fontFamily: 'system-ui' });
