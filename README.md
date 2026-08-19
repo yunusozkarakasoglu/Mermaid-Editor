@@ -31,7 +31,7 @@ npm install
 
 1. `✨ AI ile Oluştur` butonuna bas
 2. API ayarı yoksa: **Auth dosyası aç** ile `api-settings.json`'u düzenle veya formu doldurup **Kaydet**, sonra **Test et**
-3. Ayar dosyası konumu: `~/.config/mermaid-editor/api-settings.json` (Linux)
+3. Ayar dosyası konumu: `api-settings.json` (uygulama klasörünün içinde)
 
 ```json
 {

@@ -61,8 +61,8 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => app.quit());
 
 // ---------- AI ayarları / üretim ----------
-// Ayar dosyası: kullanıcıya özel, taşınabilir konum (Linux: ~/.config/mermaid-editor/)
-const SETTINGS_PATH = path.join(app.getPath('userData'), 'api-settings.json');
+// Ayar dosyası: uygulama klasörünün içinde (bu konumdan çalıştığı her yerde geçerli)
+const SETTINGS_PATH = path.join(__dirname, 'api-settings.json');
 const DEFAULTS = {
   provider: 'deepseek',
   apiKey: '',
