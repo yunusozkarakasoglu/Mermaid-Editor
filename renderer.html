@@ -116,6 +116,17 @@
   .tmpl-name { color: #89b4fa; font-size: 13px; font-weight: 600; margin: 16px 0 6px; }
   .tmpl-empty { color: #f9e2af; background: #3b2b10; border: 1px solid #8a6d3b; border-radius: 8px; padding: 10px 12px; font-size: 13px; }
   .tmpl-path { color: #6c7086; font-size: 11.5px; margin-top: 4px; }
+  /* Kapanış doğrulaması */
+  .close-box { width: 460px; }
+  .close-box p { color: #a6adc8; font-size: 13.5px; line-height: 1.5; margin: 6px 0 14px; }
+  .close-actions { display: flex; justify-content: flex-end; gap: 8px; }
+  .close-actions button { border: none; border-radius: 6px; padding: 8px 16px; font-size: 13px; cursor: pointer; }
+  #close-cancel { background: #313244; color: #cdd6f4; }
+  #close-cancel:hover { background: #45475a; }
+  #close-save { background: #6f6bff; color: #fff; }
+  #close-save:hover { background: #7f7bff; }
+  #close-anyway { background: #3b2b10; color: #f9e2af; }
+  #close-anyway:hover { background: #503a15; }
 </style>
 </head>
 <body>
@@ -371,6 +382,22 @@
       </div>
     </div>
   </div>
+  <!-- Kapanış doğrulama modalı (en üstte görünsün) -->
+  <div id="close-modal" class="modal hidden">
+    <div class="modal-box close-box">
+      <div class="modal-head">
+        <span data-i18n="close_title">Kaydedilmemiş değişiklikler</span>
+        <button id="close-x" title="Kapat">✕</button>
+      </div>
+      <p data-i18n="close_msg">Düzenlediğin dosyada kaydedilmemiş değişiklikler var. Ne yapmak istersin?</p>
+      <div class="close-actions">
+        <button id="close-cancel" data-i18n="close_cancel">İptal</button>
+        <button id="close-save" data-i18n="close_save">💾 Kaydet</button>
+        <button id="close-anyway" data-i18n="close_anyway">Yine de kapat</button>
+      </div>
+    </div>
+  </div>
+
   <script src="node_modules/mermaid/dist/mermaid.min.js"></script>
   <script src="renderer.js"></script>
 </body>

@@ -4,6 +4,25 @@ const fs = require('fs');
 
 const isMmd = (p) => /\.(mmd|mermaid)$/i.test(p) && fs.existsSync(p);
 
+// Pencere başına kaydedilmemiş değişiklik takibi
+const dirtyMap = new Map();
+
+ipcMain.handle('set-dirty', (e, v) => {
+  const win = BrowserWindow.fromWebContents(e.sender);
+  if (win) dirtyMap.set(win.id, !!v);
+  return true;
+});
+
+// Kullanıcı 'Yine de kapat' / 'Kaydet' dedikten sonra pencereyi kapat
+ipcMain.handle('close-confirmed', (e) => {
+  const win = BrowserWindow.fromWebContents(e.sender);
+  if (win) {
+    dirtyMap.set(win.id, false);
+    win.close();
+  }
+  return true;
+});
+
 // argv'den dosyaları ayıkla: electron <main.js> [dosyalar...]
 function extractMmdArgs(argv) {
   let start = argv.findIndex((a) => a.endsWith('main.js'));
@@ -25,6 +44,13 @@ function createWindow(filePath) {
     },
   });
   win.loadFile('renderer.html');
+  win.on('close', (e) => {
+    // Kaydedilmemiş değişiklik varsa kapatmayı durdur, renderer'a sor
+    if (dirtyMap.get(win.id)) {
+      e.preventDefault();
+      win.webContents.send('ask-close');
+    }
+  });
   if (filePath) {
     win.webContents.once('did-finish-load', () => {
       win.webContents.send('open-file', filePath);

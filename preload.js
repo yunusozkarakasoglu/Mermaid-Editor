@@ -14,4 +14,7 @@ contextBridge.exposeInMainWorld('api', {
   openSettingsFile: () => ipcRenderer.invoke('open-settings-file'),
   aiTest: () => ipcRenderer.invoke('ai-test'),
   listTemplates: () => ipcRenderer.invoke('list-templates'),
+  setDirty: (v) => ipcRenderer.invoke('set-dirty', v),
+  closeConfirmed: () => ipcRenderer.invoke('close-confirmed'),
+  onAskClose: (cb) => ipcRenderer.on('ask-close', () => cb()),
 });

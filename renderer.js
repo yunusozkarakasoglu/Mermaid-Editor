@@ -3,6 +3,11 @@ const preview = document.getElementById('preview');
 
 let currentPath = null;
 let dirty = false;
+// Kirli bayrağını ayarla ve ana sürece bildir (kapanış doğrulaması için)
+function markDirty(v) {
+  dirty = v;
+  window.api.setDirty(v).catch(() => null);
+}
 let debounceTimer = null;
 let lastSvg = '';
 let lastSvgError = null;
@@ -55,6 +60,8 @@ const I18N = {
     ai_testing: 'Test ediliyor…', ai_test_ok: '✓ Bağlantı OK (', ai_test_ms: 'ms, ',
     tmpl_loading: 'Şablonlar yükleniyor…', tmpl_err_read: '⚠️ Şablonlar okunamadı: ',
     tmpl_empty: '📁 Şablon klasöründe .mmd dosyası yok.', tmpl_dir: 'Klasör: ', tmpl_render_err: 'render hatası', tmpl_use: '📥 Kullan',
+    close_title: 'Kaydedilmemiş değişiklikler', close_msg: 'Düzenlediğin dosyada kaydedilmemiş değişiklikler var. Ne yapmak istersin?',
+    close_cancel: 'İptal', close_save: '💾 Kaydet', close_anyway: 'Yine de kapat',
   },
   en: {
     btn_new: 'New', btn_open: 'Open…', btn_save: 'Save', btn_saveas: 'Save As…',
@@ -101,6 +108,8 @@ const I18N = {
     ai_testing: 'Testing…', ai_test_ok: '✓ Connection OK (', ai_test_ms: 'ms, ',
     tmpl_loading: 'Loading templates…', tmpl_err_read: '⚠️ Could not read templates: ',
     tmpl_empty: '📁 No .mmd files in the templates folder.', tmpl_dir: 'Folder: ', tmpl_render_err: 'render error', tmpl_use: '📥 Use',
+    close_title: 'Unsaved changes', close_msg: 'You have unsaved changes in the file you edited. What would you like to do?',
+    close_cancel: 'Cancel', close_save: '💾 Save', close_anyway: 'Close anyway',
   },
   ru: {
     btn_new: 'Новый', btn_open: 'Открыть…', btn_save: 'Сохранить', btn_saveas: 'Сохранить как…',
@@ -147,6 +156,8 @@ const I18N = {
     ai_testing: 'Проверка…', ai_test_ok: '✓ Соединение OK (', ai_test_ms: 'мс, ',
     tmpl_loading: 'Загрузка шаблонов…', tmpl_err_read: '⚠️ Не удалось прочитать шаблоны: ',
     tmpl_empty: '📁 В папке шаблонов нет файлов .mmd.', tmpl_dir: 'Папка: ', tmpl_render_err: 'ошибка рендера', tmpl_use: '📥 Использовать',
+    close_title: 'Несохранённые изменения', close_msg: 'В файле есть несохранённые изменения. Что вы хотите сделать?',
+    close_cancel: 'Отмена', close_save: '💾 Сохранить', close_anyway: 'Всё равно закрыть',
   },
 };
 
@@ -211,7 +222,7 @@ async function renderPreview() {
 }
 
 function onInput() {
-  dirty = true;
+  markDirty(true);
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(renderPreview, 300);
 }
@@ -225,7 +236,7 @@ async function loadFile(p) {
   currentPath = res.path;
   editor.value = res.content;
   document.title = res.path.split('/').pop() + ' — Mermaid Editor';
-  dirty = false;
+  markDirty(false);
   renderPreview();
 }
 
@@ -233,7 +244,7 @@ async function save() {
   if (!currentPath) return saveAs();
   const res = await window.api.writeFile(currentPath, editor.value);
   if (res.ok) {
-    dirty = false;
+    markDirty(false);
   } else {
     alert('Kaydedilemedi: ' + (res.error || ''));
   }
@@ -244,7 +255,7 @@ async function saveAs() {
   const res = await window.api.saveAs(editor.value, def);
   if (res.ok) {
     currentPath = res.path;
-    dirty = false;
+    markDirty(false);
     document.title = res.path.split('/').pop() + ' — Mermaid Editor';
   } else if (!res.canceled) {
     alert('Kaydedilemedi: ' + (res.error || ''));
@@ -285,7 +296,7 @@ async function exportPng() {
 
 // ----- etkinlikler -----
 document.getElementById('btn-new').onclick = () => {
-  currentPath = null; editor.value = ''; dirty = false;
+  currentPath = null; editor.value = ''; markDirty(false);
   document.title = 'Mermaid Editor'; renderPreview();
 };
 document.getElementById('btn-open').onclick = async () => {
@@ -346,7 +357,7 @@ async function openTmplModal() {
     item.querySelector('code').textContent = tpl.content;
     item.querySelector('.tmpl-use').onclick = () => {
       editor.value = tpl.content;
-      dirty = true;
+      markDirty(true);
       tmplModal.classList.add('hidden');
       renderPreview();
     };
@@ -365,6 +376,26 @@ async function openTmplModal() {
 document.getElementById('btn-templates').onclick = openTmplModal;
 document.getElementById('tmpl-close').onclick = () => tmplModal.classList.add('hidden');
 tmplModal.addEventListener('click', (e) => { if (e.target === tmplModal) tmplModal.classList.add('hidden'); });
+
+// ----- Kapanış doğrulaması (kaydedilmemiş değişiklik uyarısı) -----
+const closeModal = document.getElementById('close-modal');
+
+window.api.onAskClose(() => {
+  closeModal.classList.remove('hidden');
+});
+
+document.getElementById('close-cancel').onclick = () => closeModal.classList.add('hidden');
+document.getElementById('close-x').onclick = () => closeModal.classList.add('hidden');
+
+document.getElementById('close-save').onclick = async () => {
+  await save();
+  if (!dirty) window.api.closeConfirmed(); // kaydedildi → ana süreç kapatır
+  // kaydedilemediyse (iptal/hata) diyalog açık kalır
+};
+
+document.getElementById('close-anyway').onclick = () => {
+  window.api.closeConfirmed();
+};
 
 // ----- Mermaid yazım kılavuzu (ⓘ) -----
 const infoModal = document.getElementById('info-modal');
@@ -406,7 +437,7 @@ document.querySelectorAll('.info-load').forEach((btn) => {
     const code = INFO_EXAMPLES[btn.dataset.example];
     if (!code) return;
     editor.value = code;
-    dirty = true;
+    markDirty(true);
     infoModal.classList.add('hidden');
     renderPreview();
   };
@@ -639,7 +670,7 @@ aiCodeEl.addEventListener('input', () => {
 
 document.getElementById('ai-apply').onclick = () => {
   editor.value = aiCodeEl.value;
-  dirty = true;
+  markDirty(true);
   aiTaskModal.classList.add('hidden');
   renderPreview();
 };
