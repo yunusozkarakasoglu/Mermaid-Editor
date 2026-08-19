@@ -225,6 +225,12 @@ function refreshAiState() {
   const hasKey = !!(aiSettings && aiSettings.apiKey);
   aiNoapi.classList.toggle('hidden', hasKey);
   aiReady.classList.toggle('hidden', !hasKey);
+  const warnEl = document.getElementById('ai-warn-text');
+  if (warnEl) {
+    warnEl.innerHTML = hasKey
+      ? '⚙️ <b>API ayarlarını düzenliyorsun.</b> Değişiklikleri kaydet, sonra kapat.'
+      : '⚠️ <b>API bulunamadı.</b> Diyagram üretimi için önce API anahtarını ayarla.';
+  }
   if (!hasKey) {
     document.getElementById('ai-key').value = aiSettings?.apiKey || '';
     document.getElementById('ai-baseurl').value = aiSettings?.baseUrl || 'https://api.deepseek.com';
@@ -340,4 +346,4 @@ document.getElementById('ai-edit-settings').onclick = () => {
 
 // başlangıç
 setTheme();
-window.api.getSettings().then((s) => { aiSettings = s; });
+window.api.getSettings().then((s) => { aiSettings = s; refreshAiState(); });
