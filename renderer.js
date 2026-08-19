@@ -311,12 +311,7 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
-window.addEventListener('beforeunload', (e) => {
-  if (dirty) {
-    e.preventDefault();
-    e.returnValue = '';
-  }
-});
+// Not: beforeunload koruması kaldırıldı — X her zaman uygulamayı kapatır.
 
 window.api.onOpenFile((p) => loadFile(p));
 
