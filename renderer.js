@@ -163,7 +163,26 @@ const INFO_EXAMPLES = {
   pie: 'pie\n  title Kullanım Dağılımı\n  "Web" : 60\n  "Mobil" : 40',
 };
 
-document.getElementById('btn-info').onclick = () => infoModal.classList.remove('hidden');
+// Modal açılınca her örneğin canlı önizlemesini çiz (mevcut temayla)
+async function renderInfoPreviews() {
+  for (const [key, code] of Object.entries(INFO_EXAMPLES)) {
+    const box = document.querySelector(`.info-preview[data-preview="${key}"]`);
+    if (!box) continue;
+    box.innerHTML = '';
+    try {
+      const id = 'ip-' + key + '-' + Math.random().toString(36).slice(2);
+      const { svg } = await mermaid.render(id, code);
+      box.innerHTML = svg;
+    } catch {
+      box.innerHTML = '<span style="color:#6c7086;font-size:12px">—</span>';
+    }
+  }
+}
+
+document.getElementById('btn-info').onclick = () => {
+  infoModal.classList.remove('hidden');
+  renderInfoPreviews();
+};
 document.getElementById('info-close').onclick = () => infoModal.classList.add('hidden');
 infoModal.addEventListener('click', (e) => { if (e.target === infoModal) infoModal.classList.add('hidden'); });
 document.querySelectorAll('.info-load').forEach((btn) => {

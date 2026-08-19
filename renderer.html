@@ -90,13 +90,17 @@
     transform: scale(1.1);
   }
   /* Bilgi modalı */
-  .info-box { width: 860px; }
+  .info-box { width: 980px; }
   .info-body { overflow-y: auto; max-height: 72vh; padding-right: 6px; }
   .info-body h4 { color: #cdd6f4; margin: 14px 0 6px; font-size: 14px; }
   .info-body p { color: #a6adc8; font-size: 12.5px; margin: 4px 0; line-height: 1.5; }
-  .info-body pre { background: #11111b; border: 1px solid #313244; border-radius: 8px; padding: 10px 12px; overflow-x: auto; font-size: 12.5px; line-height: 1.5; margin: 6px 0; }
-  .info-body code { color: #a6e3a1; font-family: 'JetBrains Mono', monospace; }
-  .info-load { background: #313244; color: #cdd6f4; border: none; border-radius: 5px; padding: 4px 12px; font-size: 12px; cursor: pointer; margin-bottom: 8px; }
+  .info-example { display: flex; gap: 12px; margin: 6px 0 10px; }
+  .info-code { flex: 1; min-width: 0; }
+  .info-code pre { background: #11111b; border: 1px solid #313244; border-radius: 8px; padding: 10px 12px; overflow-x: auto; font-size: 12.5px; line-height: 1.5; margin: 0 0 6px; }
+  .info-code code { color: #a6e3a1; font-family: 'JetBrains Mono', monospace; }
+  .info-preview { flex: 1; min-width: 0; border: 1px solid #313244; border-radius: 8px; background: #11111b; padding: 10px; display: flex; align-items: center; justify-content: center; overflow: auto; }
+  .info-preview svg { max-width: 100%; height: auto; }
+  .info-load { background: #313244; color: #cdd6f4; border: none; border-radius: 5px; padding: 4px 12px; font-size: 12px; cursor: pointer; }
   .info-load:hover { background: #45475a; }
 </style>
 </head>
@@ -208,58 +212,90 @@
       <div class="info-body">
         <h4>1. Akış Şeması (Flowchart)</h4>
         <p><code>TD</code> = yukarıdan aşağı, <code>LR</code> = soldan sağa. Düğüm şekilleri: <code>[ ]</code> dikdörtgen, <code>{ }</code> karar, <code>( )</code> yuvarlak, <code>(( ))</code> daire. Kenarlar: <code>--&gt;</code> ok, <code>---</code> çizgi, <code>-.→</code> kesikli, <code>==&gt;</code> kalın. Kenar etiketi: <code>--&gt;|metin|</code></p>
-        <pre><code>flowchart TD
+        <div class="info-example">
+          <div class="info-code">
+            <pre><code>flowchart TD
   A[Başla] --&gt; B{Karar}
   B --&gt;|Evet| C[İşlem]
   B --&gt;|Hayır| D[Bitir]</code></pre>
-        <button class="info-load" data-example="flow">✏️ Editöre al</button>
+            <button class="info-load" data-example="flow">✏️ Editöre al</button>
+          </div>
+          <div class="info-preview" data-preview="flow"></div>
+        </div>
 
         <h4>2. Sıralama Diyagramı (Sequence)</h4>
         <p><code>-&gt;&gt;</code> düz mesaj, <code>--&gt;&gt;</code> kesikli yanıt, <code>Note over</code> ile açıklama.</p>
-        <pre><code>sequenceDiagram
+        <div class="info-example">
+          <div class="info-code">
+            <pre><code>sequenceDiagram
   participant K as Kullanıcı
   participant S as Sunucu
   K-&gt;&gt;S: Giriş isteği
   S--&gt;&gt;K: Token döner</code></pre>
-        <button class="info-load" data-example="seq">✏️ Editöre al</button>
+            <button class="info-load" data-example="seq">✏️ Editöre al</button>
+          </div>
+          <div class="info-preview" data-preview="seq"></div>
+        </div>
 
         <h4>3. Sınıf Diyagramı (Class)</h4>
         <p>Kalıtım: <code>&lt;|--</code>, uygulama: <code>..|&gt;</code>, ilişki: <code>--</code>, kompozisyon: <code>*--</code></p>
-        <pre><code>classDiagram
+        <div class="info-example">
+          <div class="info-code">
+            <pre><code>classDiagram
   class Hayvan {
     +String ad
     +sesCikar()
   }
   class Kedi
   Hayvan &lt;|-- Kedi</code></pre>
-        <button class="info-load" data-example="class">✏️ Editöre al</button>
+            <button class="info-load" data-example="class">✏️ Editöre al</button>
+          </div>
+          <div class="info-preview" data-preview="class"></div>
+        </div>
 
         <h4>4. Durum Diyagramı (State)</h4>
-        <pre><code>stateDiagram-v2
+        <div class="info-example">
+          <div class="info-code">
+            <pre><code>stateDiagram-v2
   [*] --&gt; Boşta
   Boşta --&gt; Çalışıyor: başlat
   Çalışıyor --&gt; [*]: dur</code></pre>
-        <button class="info-load" data-example="state">✏️ Editöre al</button>
+            <button class="info-load" data-example="state">✏️ Editöre al</button>
+          </div>
+          <div class="info-preview" data-preview="state"></div>
+        </div>
 
         <h4>5. Varlık İlişki Diyagramı (ER)</h4>
         <p>Kardinalite: <code>||--o{</code> (bir-çok), <code>||--||</code> (bir-bir), <code>}o--o{</code> (çok-çok)</p>
-        <pre><code>erDiagram
+        <div class="info-example">
+          <div class="info-code">
+            <pre><code>erDiagram
   KULLANICI ||--o{ SIPARIS : "verir"
   SIPARIS ||--|{ KALEM : "içerir"</code></pre>
-        <button class="info-load" data-example="er">✏️ Editöre al</button>
+            <button class="info-load" data-example="er">✏️ Editöre al</button>
+          </div>
+          <div class="info-preview" data-preview="er"></div>
+        </div>
 
         <h4>6. Gantt (Zaman Çizelgesi)</h4>
-        <pre><code>gantt
+        <div class="info-example">
+          <div class="info-code">
+            <pre><code>gantt
   title Proje Planı
   dateFormat YYYY-MM-DD
   section Tasarım
     Arayüz: 2026-01-01, 7d
   section Geliştirme
     API: 2026-01-08, 14d</code></pre>
-        <button class="info-load" data-example="gantt">✏️ Editöre al</button>
+            <button class="info-load" data-example="gantt">✏️ Editöre al</button>
+          </div>
+          <div class="info-preview" data-preview="gantt"></div>
+        </div>
 
         <h4>7. Zihin Haritası (Mindmap) &amp; Pasta (Pie)</h4>
-        <pre><code>mindmap
+        <div class="info-example">
+          <div class="info-code">
+            <pre><code>mindmap
   root((Proje))
     Backend
       API
@@ -267,12 +303,20 @@
     Frontend
       Arayüz
       State</code></pre>
-        <button class="info-load" data-example="mindmap">✏️ Editöre al</button>
-        <pre><code>pie
+            <button class="info-load" data-example="mindmap">✏️ Editöre al</button>
+          </div>
+          <div class="info-preview" data-preview="mindmap"></div>
+        </div>
+        <div class="info-example">
+          <div class="info-code">
+            <pre><code>pie
   title Kullanım Dağılımı
   "Web" : 60
   "Mobil" : 40</code></pre>
-        <button class="info-load" data-example="pie">✏️ Editöre al</button>
+            <button class="info-load" data-example="pie">✏️ Editöre al</button>
+          </div>
+          <div class="info-preview" data-preview="pie"></div>
+        </div>
 
         <h4>İpucu</h4>
         <p>• Düğüm etiketleri kısa tut, karmaşık açıklamaları kenar etiketlerine yaz.<br>
