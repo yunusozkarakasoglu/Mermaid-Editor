@@ -368,11 +368,6 @@ document.getElementById('ai-apply').onclick = () => {
   renderPreview();
 };
 
-document.getElementById('ai-edit-settings').onclick = () => {
-  refreshAiState();
-  document.getElementById('ai-test-result').textContent = '';
-};
-
 // başlangıç
 setTheme();
 window.api.getSettings().then((s) => { aiSettings = s; refreshAiState(); });

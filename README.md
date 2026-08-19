@@ -71,3 +71,5 @@ Bu proje aşağıdaki açık kaynak projelerden yararlanır / ilham alır:
 - **[mermaid-js/mermaid-live-editor](https://github.com/mermaid-js/mermaid-live-editor)** — Editör + canlı önizleme arayüz tasarımının ilham kaynağı.
 - **[1jehuang/mermaid-rs-renderer](https://github.com/1jehuang/mermaid-rs-renderer)** — Geliştirme sürecinde hızlı (tarayıcısız) render araştırması; `mmdr` CLI aracı yerelde hızlı SVG üretimi için kurulu.
 - **[lukilabs/beautiful-mermaid](https://github.com/lukilabs/beautiful-mermaid)** — Tema ve görsel estetik araştırması.
+
+> 💡 **API ayarını değiştirmek:** `api-settings.json` dosyasını sil — uygulama bir sonraki açılışta ayar ekranını gösterir.
