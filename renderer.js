@@ -33,6 +33,7 @@ function log(msg) {
 document.getElementById('log-close').onclick = () => logPanel.classList.add('hidden');
 document.getElementById('log-clear').onclick = () => { logContent.innerHTML = ''; logCount = 0; };
 document.getElementById('btn-log').onclick = () => logPanel.classList.toggle('hidden');
+document.getElementById('btn-refresh').onclick = () => renderPreview();
 let themeIndex = 0;
 const THEMES = ['default', 'dark', 'forest', 'neutral', 'modern'];
 
@@ -219,12 +220,33 @@ applyLang();
 
 function setTheme() {
   const theme = THEMES[themeIndex % THEMES.length];
-  mermaid.initialize({ startOnLoad: false, theme, securityLevel: 'loose', htmlLabels: false, fontFamily: 'system-ui' });
+  mermaid.initialize({ startOnLoad: false, theme, securityLevel: 'loose', htmlLabels: false, fontFamily: 'system-ui', suppressErrorRendering: true });
   renderPreview();
 }
 
 function esc(s) {
   return s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+}
+
+// Geçici hidden container ile render — mermaid'in body'ye bıraktığı div'ler kalmasın
+// ve suppressErrorRendering ile kendi hata SVG'ini (bomba ikonu) hiç üretmesin
+async function renderMermaid(code) {
+  const holder = document.createElement('div');
+  holder.id = 'mmd-' + Math.random().toString(36).slice(2);
+  holder.style.display = 'none';
+  document.body.appendChild(holder);
+  try {
+    const { svg } = await mermaid.render(holder.id, code);
+    return svg;
+  } finally {
+    holder.remove();
+  }
+}
+
+// Başlangıçta eski oturumlardan kalan mermaid geçici div'lerini temizle
+function cleanupMermaidTemp() {
+  document.querySelectorAll('body > div[id^="mmd-"], body > div[id^="ip-"], body > div[id^="th-"], body > div[id^="tp-"]')
+    .forEach((d) => d.remove());
 }
 
 async function renderPreview() {
@@ -237,8 +259,7 @@ async function renderPreview() {
     return;
   }
   try {
-    const id = 'mmd-' + Math.random().toString(36).slice(2);
-    const { svg } = await mermaid.render(id, code);
+    const svg = await renderMermaid(code);
     preview.innerHTML = svg;
     lastSvg = svg;
     lastGoodSvg = svg;
@@ -406,9 +427,7 @@ async function openTmplModal() {
     } else {
       let html = '<span style="color:#f38ba8;font-size:12px">' + T('tmpl_render_err') + '</span>';
       try {
-        const id = 'tp-' + Math.random().toString(36).slice(2);
-        const r = await mermaid.render(id, tpl.content);
-        html = r.svg;
+        html = await renderMermaid(tpl.content);
       } catch {}
       pv.innerHTML = html;
       if (!tmplCache) tmplCache = { sig, htmls: {} };
@@ -482,9 +501,7 @@ async function renderInfoPreviews() {
     if (!box) continue;
     let html = '<span style="color:#6c7086;font-size:12px">—</span>';
     try {
-      const id = 'ip-' + key + '-' + Math.random().toString(36).slice(2);
-      const r = await mermaid.render(id, code);
-      html = r.svg;
+      html = await renderMermaid(code);
     } catch {}
     box.innerHTML = html;
     htmls[key] = html;
@@ -561,7 +578,7 @@ async function renderThemePreviews() {
   themeGrid.innerHTML = '';
   themePreviewCache = [];
   for (const t of THEMES) {
-    mermaid.initialize({ startOnLoad: false, theme: t, securityLevel: 'loose', htmlLabels: false, fontFamily: 'system-ui' });
+    mermaid.initialize({ startOnLoad: false, theme: t, securityLevel: 'loose', htmlLabels: false, fontFamily: 'system-ui', suppressErrorRendering: true });
     const card = document.createElement('div');
     card.className = 'theme-card';
     card.dataset.theme = t;
@@ -573,14 +590,13 @@ async function renderThemePreviews() {
     let svg = '<span style="color:#6c7086;font-size:12px">—</span>';
     try {
       const id = 'th-' + t + '-' + Math.random().toString(36).slice(2);
-      const r = await mermaid.render(id, sample);
-      svg = r.svg;
+      svg = await renderMermaid(sample);
       pv.innerHTML = svg;
     } catch {}
     themePreviewCache.push({ theme: t, label: T('theme_' + t), svg });
   }
   // Ana temayı geri yükle
-  mermaid.initialize({ startOnLoad: false, theme: THEMES[themeIndex % THEMES.length], securityLevel: 'loose', htmlLabels: false, fontFamily: 'system-ui' });
+  mermaid.initialize({ startOnLoad: false, theme: THEMES[themeIndex % THEMES.length], securityLevel: 'loose', htmlLabels: false, fontFamily: 'system-ui', suppressErrorRendering: true });
 }
 
 function selectTheme(t) {
@@ -669,8 +685,7 @@ function renderAiPreview() {
     return;
   }
   try {
-    const id = 'ai-' + Math.random().toString(36).slice(2);
-    mermaid.render(id, code).then(({ svg }) => {
+    renderMermaid(code).then((svg) => {
       aiPreview.innerHTML = svg;
       aiLastSvg = svg;
       aiApplyBtn.disabled = false;
@@ -775,6 +790,7 @@ document.getElementById('ai-apply').onclick = () => {
 };
 
 // başlangıç
+cleanupMermaidTemp();
 setTheme();
 window.api.getSettings().then((s) => {
   aiSettings = s || {};

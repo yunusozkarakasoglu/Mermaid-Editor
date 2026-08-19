@@ -161,7 +161,10 @@
     <div class="pane">
       <div class="pane-title" style="display:flex;justify-content:space-between;align-items:center">
         <span data-i18n="pane_editor">Editör</span>
-        <button id="btn-info" class="info-btn" title="Mermaid yazım kılavuzu">ⓘ</button>
+        <span style="display:flex;gap:4px;align-items:center">
+          <button id="btn-refresh" class="info-btn" title="Yenile">🔄</button>
+          <button id="btn-info" class="info-btn" title="Mermaid yazım kılavuzu">ⓘ</button>
+        </span>
       </div>
       <textarea id="editor" spellcheck="false" data-i18n-ph="ph_editor" placeholder="Mermaid kodu yaz veya yapıştır…&#10;örn: flowchart TD&#10;  A[Başla] --&gt; B[Bitir]"></textarea>
     </div>
