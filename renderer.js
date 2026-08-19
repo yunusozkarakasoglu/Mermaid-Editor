@@ -214,6 +214,36 @@ let aiSettings = null;
 let aiDebounce = null;
 let aiLastSvg = '';
 
+// Sağlayıcı varsayılanları (OpenAI uyumlu API'ler)
+const PROVIDERS = {
+  deepseek:   { label: 'DeepSeek',    baseUrl: 'https://api.deepseek.com',        model: 'deepseek-chat' },
+  openai:     { label: 'OpenAI',      baseUrl: 'https://api.openai.com/v1',       model: 'gpt-4o-mini' },
+  openrouter: { label: 'OpenRouter',  baseUrl: 'https://openrouter.ai/api/v1',    model: 'openrouter/auto' },
+  groq:       { label: 'Groq',        baseUrl: 'https://api.groq.com/openai/v1',  model: 'llama-3.3-70b-versatile' },
+  mistral:    { label: 'Mistral',     baseUrl: 'https://api.mistral.ai/v1',       model: 'mistral-small-latest' },
+  xai:        { label: 'xAI (Grok)',  baseUrl: 'https://api.x.ai/v1',             model: 'grok-2-latest' },
+  ollama:     { label: 'Ollama (yerel)', baseUrl: 'http://localhost:11434/v1',    model: 'llama3.2' },
+};
+
+function fillProviderSelect(selected) {
+  const sel = document.getElementById('ai-provider');
+  sel.innerHTML = '';
+  for (const [key, p] of Object.entries(PROVIDERS)) {
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = p.label;
+    if (key === selected) opt.selected = true;
+    sel.appendChild(opt);
+  }
+}
+
+function applyProviderDefaults(keepSaved) {
+  const p = PROVIDERS[document.getElementById('ai-provider').value];
+  if (!p) return;
+  document.getElementById('ai-baseurl').value = keepSaved && aiSettings?.baseUrl ? aiSettings.baseUrl : p.baseUrl;
+  document.getElementById('ai-model').value = keepSaved && aiSettings?.model ? aiSettings.model : p.model;
+}
+
 function showAiModal() {
   aiModal.classList.remove('hidden');
   aiError.textContent = '';
@@ -231,12 +261,10 @@ function refreshAiState() {
       ? '⚙️ <b>API ayarlarını düzenliyorsun.</b> Değişiklikleri kaydet, sonra kapat.'
       : '⚠️ <b>API bulunamadı.</b> Diyagram üretimi için önce API anahtarını ayarla.';
   }
-  if (!hasKey) {
-    document.getElementById('ai-key').value = aiSettings?.apiKey || '';
-    document.getElementById('ai-baseurl').value = aiSettings?.baseUrl || 'https://api.deepseek.com';
-    document.getElementById('ai-model').value = aiSettings?.model || 'deepseek-chat';
-    document.getElementById('ai-provider').value = aiSettings?.provider || 'deepseek';
-  }
+  // Formu her durumda doldur (gizli olsa bile güncel kalsın)
+  document.getElementById('ai-key').value = aiSettings?.apiKey || '';
+  fillProviderSelect(aiSettings?.provider || 'deepseek');
+  applyProviderDefaults(true); // kayıtlı değer varsa koru
 }
 
 function renderAiPreview() {
@@ -264,6 +292,8 @@ function renderAiPreview() {
 document.getElementById('btn-ai').onclick = showAiModal;
 document.getElementById('ai-close').onclick = () => aiModal.classList.add('hidden');
 aiModal.addEventListener('click', (e) => { if (e.target === aiModal) aiModal.classList.add('hidden'); });
+
+document.getElementById('ai-provider').addEventListener('change', () => applyProviderDefaults(false));
 
 // API yok görünümü: kaydet / auth dosyası aç / test
 document.getElementById('ai-save-settings').onclick = async () => {
@@ -339,8 +369,7 @@ document.getElementById('ai-apply').onclick = () => {
 };
 
 document.getElementById('ai-edit-settings').onclick = () => {
-  aiNoapi.classList.remove('hidden');
-  aiReady.classList.add('hidden');
+  refreshAiState();
   document.getElementById('ai-test-result').textContent = '';
 };
 
