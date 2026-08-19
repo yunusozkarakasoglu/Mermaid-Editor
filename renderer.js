@@ -134,7 +134,8 @@ window.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'o') { e.preventDefault(); document.getElementById('btn-open').click(); }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') { e.preventDefault(); showAiModal(); }
   if (e.key === 'Escape') {
-    if (!aiModal.classList.contains('hidden')) aiModal.classList.add('hidden');
+    if (!aiSettingsModal.classList.contains('hidden')) aiSettingsModal.classList.add('hidden');
+    if (!aiTaskModal.classList.contains('hidden')) aiTaskModal.classList.add('hidden');
     if (!themeModal.classList.contains('hidden')) themeModal.classList.add('hidden');
   }
 });
@@ -201,10 +202,9 @@ document.getElementById('theme-close').onclick = () => themeModal.classList.add(
 document.getElementById('theme-ok').onclick = () => themeModal.classList.add('hidden');
 themeModal.addEventListener('click', (e) => { if (e.target === themeModal) themeModal.classList.add('hidden'); });
 
-// ----- AI ile Oluştur (basit mantık) -----
-const aiModal = document.getElementById('ai-modal');
-const aiNoapi = document.getElementById('ai-noapi');
-const aiReady = document.getElementById('ai-ready');
+// ----- AI: iki ayrı modal (ayar / görev) -----
+const aiSettingsModal = document.getElementById('ai-settings-modal');
+const aiTaskModal = document.getElementById('ai-task-modal');
 const aiStatus = document.getElementById('ai-status');
 const aiError = document.getElementById('ai-error');
 const aiCodeEl = document.getElementById('ai-code');
@@ -244,29 +244,23 @@ function applyProviderDefaults(keepSaved) {
   document.getElementById('ai-model').value = keepSaved && aiSettings?.model ? aiSettings.model : p.model;
 }
 
-async function showAiModal() {
-  // Her açılışta ayarları dosyadan taze oku (dışarıdan düzenlenmiş olabilir)
+// Ana giriş: API tanımlıysa görev modalı, değilse ayar modalı aç
+async function openAiFlow() {
   aiSettings = await window.api.getSettings().catch(() => null);
-  aiModal.classList.remove('hidden');
-  aiError.textContent = '';
-  refreshAiState();
-  if (aiSettings?.apiKey) document.getElementById('ai-prompt').focus();
+  if (aiSettings?.apiKey) {
+    aiTaskModal.classList.remove('hidden');
+    document.getElementById('ai-prompt').focus();
+  } else {
+    fillSettingsForm();
+    aiSettingsModal.classList.remove('hidden');
+  }
 }
 
-function refreshAiState() {
-  const hasKey = !!(aiSettings && aiSettings.apiKey);
-  aiNoapi.classList.toggle('hidden', hasKey);
-  aiReady.classList.toggle('hidden', !hasKey);
-  const warnEl = document.getElementById('ai-warn-text');
-  if (warnEl) {
-    warnEl.innerHTML = hasKey
-      ? '⚙️ <b>API ayarlarını düzenliyorsun.</b> Değişiklikleri kaydet, sonra kapat.'
-      : '⚠️ <b>API bulunamadı.</b> Diyagram üretimi için önce API anahtarını ayarla.';
-  }
-  // Formu her durumda doldur (gizli olsa bile güncel kalsın)
+function fillSettingsForm() {
   document.getElementById('ai-key').value = aiSettings?.apiKey || '';
   fillProviderSelect(aiSettings?.provider || 'deepseek');
-  applyProviderDefaults(true); // kayıtlı değer varsa koru
+  applyProviderDefaults(true);
+  document.getElementById('ai-test-result').textContent = '';
 }
 
 function renderAiPreview() {
@@ -291,13 +285,17 @@ function renderAiPreview() {
   }
 }
 
-document.getElementById('btn-ai').onclick = showAiModal;
-document.getElementById('ai-close').onclick = () => aiModal.classList.add('hidden');
-aiModal.addEventListener('click', (e) => { if (e.target === aiModal) aiModal.classList.add('hidden'); });
+document.getElementById('btn-ai').onclick = openAiFlow;
+
+document.getElementById('ai-settings-close').onclick = () => aiSettingsModal.classList.add('hidden');
+aiSettingsModal.addEventListener('click', (e) => { if (e.target === aiSettingsModal) aiSettingsModal.classList.add('hidden'); });
+
+document.getElementById('ai-close').onclick = () => aiTaskModal.classList.add('hidden');
+aiTaskModal.addEventListener('click', (e) => { if (e.target === aiTaskModal) aiTaskModal.classList.add('hidden'); });
 
 document.getElementById('ai-provider').addEventListener('change', () => applyProviderDefaults(false));
 
-// API yok görünümü: kaydet / auth dosyası aç / test
+// Ayar modalı: kaydet / auth dosyası aç / test
 document.getElementById('ai-save-settings').onclick = async () => {
   const s = {
     provider: document.getElementById('ai-provider').value,
@@ -311,7 +309,14 @@ document.getElementById('ai-save-settings').onclick = async () => {
     aiSettings = s;
     el.textContent = '✓ kaydedildi';
     el.className = 'ok';
-    refreshAiState();
+    // Key varsa ayar modalını kapat, görev modalını aç
+    if (s.apiKey) {
+      setTimeout(() => {
+        aiSettingsModal.classList.add('hidden');
+        aiTaskModal.classList.remove('hidden');
+        document.getElementById('ai-prompt').focus();
+      }, 400);
+    }
   } else {
     el.textContent = '✗ ' + (res.error || 'hata');
     el.className = 'bad';
@@ -334,7 +339,7 @@ document.getElementById('ai-test').onclick = async () => {
   else { el.textContent = '✗ ' + (res.error || 'hata'); el.className = 'bad'; }
 };
 
-// API var görünümü: oluştur / editöre aktar / ayar düzenle
+// Görev modalı: oluştur / editöre aktar
 document.getElementById('ai-generate').onclick = async () => {
   const prompt = document.getElementById('ai-prompt').value.trim();
   if (!prompt) { aiError.textContent = 'Önce diyagramı anlat.'; return; }
@@ -366,10 +371,10 @@ aiCodeEl.addEventListener('input', () => {
 document.getElementById('ai-apply').onclick = () => {
   editor.value = aiCodeEl.value;
   dirty = true;
-  aiModal.classList.add('hidden');
+  aiTaskModal.classList.add('hidden');
   renderPreview();
 };
 
 // başlangıç
 setTheme();
-window.api.getSettings().then((s) => { aiSettings = s; refreshAiState(); });
+window.api.getSettings().then((s) => { aiSettings = s; });
