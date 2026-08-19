@@ -34,6 +34,84 @@ document.getElementById('log-close').onclick = () => logPanel.classList.add('hid
 document.getElementById('log-clear').onclick = () => { logContent.innerHTML = ''; logCount = 0; };
 document.getElementById('btn-log').onclick = () => logPanel.classList.toggle('hidden');
 document.getElementById('btn-refresh').onclick = () => renderPreview();
+
+// ----- Önizleme zoom / pan / tam ekran -----
+let zoomScale = 1;
+let zoomUserControlled = false;
+
+function applyZoom(container, svgSel, labelSel) {
+  const svg = container.querySelector(svgSel);
+  if (!svg) return;
+  const vb = svg.viewBox.baseVal;
+  svg.style.maxWidth = 'none'; // mermaid'in inline max-width'ini ez
+  svg.style.width = (vb.width * zoomScale) + 'px';
+  svg.style.height = (vb.height * zoomScale) + 'px';
+  document.getElementById(labelSel).textContent = Math.round(zoomScale * 100) + '%';
+}
+
+function fitPreview() {
+  const svg = preview.querySelector('svg');
+  if (!svg) return;
+  const vb = svg.viewBox.baseVal;
+  const cw = preview.clientWidth - 40, ch = preview.clientHeight - 40;
+  zoomScale = Math.max(0.05, Math.min(1, cw / vb.width, ch / vb.height));
+  applyZoom(preview, 'svg', 'zoom-label');
+}
+
+function zoomBy(f) {
+  zoomUserControlled = true;
+  zoomScale = Math.min(5, Math.max(0.1, zoomScale * f));
+  applyZoom(preview, 'svg', 'zoom-label');
+}
+
+document.getElementById('zoom-in').onclick = () => zoomBy(1.25);
+document.getElementById('zoom-out').onclick = () => zoomBy(0.8);
+document.getElementById('zoom-reset').onclick = () => {
+  zoomUserControlled = false;
+  fitPreview();
+};
+
+// Sürükle-taşı (pan): farenle tutup çek
+function enablePan(scrollEl) {
+  let panning = false, sx, sy, sl, st;
+  scrollEl.addEventListener('mousedown', (e) => {
+    if (e.button !== 0 || e.target.closest('button')) return;
+    panning = true;
+    sx = e.clientX; sy = e.clientY;
+    sl = scrollEl.scrollLeft; st = scrollEl.scrollTop;
+    scrollEl.style.cursor = 'grabbing';
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove', (e) => {
+    if (!panning) return;
+    scrollEl.scrollLeft = sl - (e.clientX - sx);
+    scrollEl.scrollTop = st - (e.clientY - sy);
+  });
+  window.addEventListener('mouseup', () => {
+    if (panning) { panning = false; scrollEl.style.cursor = 'grab'; }
+  });
+}
+enablePan(preview);
+
+// Tam ekran
+const fsOverlay = document.getElementById('fs-overlay');
+const fsStage = document.getElementById('fs-stage');
+function openFullscreen() {
+  const svg = preview.querySelector('svg');
+  if (!svg) return;
+  fsStage.innerHTML = svg.outerHTML;
+  zoomScale = zoomScale; // aynı ölçekle başla
+  applyZoom(fsStage, 'svg', 'fs-label');
+  fsOverlay.classList.remove('hidden');
+}
+document.getElementById('zoom-full').onclick = openFullscreen;
+document.getElementById('fs-close').onclick = () => fsOverlay.classList.add('hidden');
+document.getElementById('fs-in').onclick = () => { zoomScale = Math.min(5, zoomScale * 1.25); applyZoom(fsStage, 'svg', 'fs-label'); };
+document.getElementById('fs-out').onclick = () => { zoomScale = Math.max(0.1, zoomScale * 0.8); applyZoom(fsStage, 'svg', 'fs-label'); };
+document.getElementById('fs-reset').onclick = () => { zoomScale = 1; applyZoom(fsStage, 'svg', 'fs-label'); };
+enablePan(fsStage);
+// Tam ekran kapat: Esc
+fsOverlay.addEventListener('click', (e) => { if (e.target === fsOverlay) fsOverlay.classList.add('hidden'); });
 let themeIndex = 0;
 const THEMES = ['default', 'dark', 'forest', 'neutral', 'modern'];
 
@@ -264,6 +342,9 @@ async function renderPreview() {
     lastSvg = svg;
     lastGoodSvg = svg;
     lastSvgError = null;
+    // zoom uygula: kullanıcı manuel zoom yapmadıysa panele sığdır
+    if (zoomUserControlled) applyZoom(preview, 'svg', 'zoom-label');
+    else fitPreview();
   } catch (e) {
     // Hata: log paneline yaz, önizlemede son iyi diyagramı koru
     const msg = e.message || String(e);
@@ -368,6 +449,7 @@ window.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'o') { e.preventDefault(); document.getElementById('btn-open').click(); }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') { e.preventDefault(); showAiModal(); }
   if (e.key === 'Escape') {
+    if (!fsOverlay.classList.contains('hidden')) fsOverlay.classList.add('hidden');
     if (!aiSettingsModal.classList.contains('hidden')) aiSettingsModal.classList.add('hidden');
     if (!aiTaskModal.classList.contains('hidden')) aiTaskModal.classList.add('hidden');
     if (!themeModal.classList.contains('hidden')) themeModal.classList.add('hidden');

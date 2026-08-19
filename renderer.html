@@ -23,8 +23,9 @@
   .pane { flex: 1; min-width: 0; display: flex; flex-direction: column; }
   .pane-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; padding: 4px 10px; background: #11111b; color: #6c7086; }
   #editor { flex: 1; background: #11111b; color: #cdd6f4; border: none; outline: none; padding: 12px; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 14px; line-height: 1.5; resize: none; tab-size: 2; }
-  #preview { flex: 1; background: #1e1e2e; overflow: auto; padding: 16px; display: flex; justify-content: center; }
-  #preview svg { max-width: 100%; height: auto; }
+  #preview { flex: 1; background: #1e1e2e; overflow: auto; padding: 16px; cursor: grab; }
+  #preview:active { cursor: grabbing; }
+  #preview svg { display: block; margin: 0 auto; max-width: none; }
   .err { color: #f38ba8; font-family: monospace; font-size: 13px; white-space: pre-wrap; }
   .hint { color: #6c7086; font-size: 14px; align-self: center; }
   .split { width: 1px; background: #313244; }
@@ -112,6 +113,19 @@
   .info-preview svg { max-width: 100%; height: auto; }
   .info-load { background: #313244; color: #cdd6f4; border: none; border-radius: 5px; padding: 4px 12px; font-size: 12px; cursor: pointer; }
   .info-load:hover { background: #45475a; }
+  /* Önizleme zoom araçları (önizleme başlığı) */
+  .zoom-tools { display: flex; gap: 2px; align-items: center; }
+  .zoom-tools .info-btn { font-size: 13px; width: 22px; height: 22px; padding: 0; }
+  .zoom-label { font-size: 11px; color: #6c7086; min-width: 40px; text-align: center; }
+  /* Tam ekran önizleme (kontroller ÜSTTE, overlay tüm ekranı kaplar) */
+  .fs-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.94); z-index: 300; display: flex; flex-direction: column; }
+  .fs-overlay.hidden { display: none; }
+  .fs-bar { display: flex; gap: 8px; align-items: center; padding: 8px 14px; background: #181825; color: #a6adc8; font-size: 13px; }
+  .fs-bar button { background: #313244; color: #cdd6f4; border: none; border-radius: 5px; padding: 4px 14px; font-size: 13px; cursor: pointer; }
+  .fs-bar button:hover { background: #45475a; }
+  #fs-stage { flex: 1; overflow: auto; padding: 20px; cursor: grab; }
+  #fs-stage:active { cursor: grabbing; }
+  #fs-stage svg { display: block; margin: 0 auto; max-width: none; }
   /* Şablonlar */
   .tmpl-name { color: #89b4fa; font-size: 13px; font-weight: 600; margin: 16px 0 6px; }
   .tmpl-empty { color: #f9e2af; background: #3b2b10; border: 1px solid #8a6d3b; border-radius: 8px; padding: 10px 12px; font-size: 13px; }
@@ -170,9 +184,31 @@
     </div>
     <div class="split"></div>
     <div class="pane">
-      <div class="pane-title" data-i18n="pane_preview">Önizleme</div>
+      <div class="pane-title" style="display:flex;justify-content:space-between;align-items:center">
+        <span data-i18n="pane_preview">Önizleme</span>
+        <span class="zoom-tools">
+          <button id="zoom-out" class="info-btn" title="Uzaklaştır">−</button>
+          <span id="zoom-label" class="zoom-label">100%</span>
+          <button id="zoom-in" class="info-btn" title="Yakınlaştır">+</button>
+          <button id="zoom-reset" class="info-btn" title="Sığdır">⟳</button>
+          <button id="zoom-full" class="info-btn" title="Tam ekran">⛶</button>
+        </span>
+      </div>
       <div id="preview"><div class="hint" data-i18n="hint_preview">Diyagram burada canlı görünecek</div></div>
     </div>
+  </div>
+
+  <!-- Tam ekran önizleme -->
+  <div id="fs-overlay" class="fs-overlay hidden">
+    <div class="fs-bar">
+      <span id="fs-label">100%</span>
+      <button id="fs-out" title="Uzaklaştır">−</button>
+      <button id="fs-in" title="Yakınlaştır">+</button>
+      <button id="fs-reset" title="Sığdır">⟳</button>
+      <span style="flex:1"></span>
+      <button id="fs-close">✕ Kapat</button>
+    </div>
+    <div id="fs-stage"></div>
   </div>
 
   <!-- Log paneli (altta, kapatılabilir) -->
