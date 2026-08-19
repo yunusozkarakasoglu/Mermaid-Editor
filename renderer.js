@@ -137,6 +137,7 @@ window.addEventListener('keydown', (e) => {
     if (!aiSettingsModal.classList.contains('hidden')) aiSettingsModal.classList.add('hidden');
     if (!aiTaskModal.classList.contains('hidden')) aiTaskModal.classList.add('hidden');
     if (!themeModal.classList.contains('hidden')) themeModal.classList.add('hidden');
+    if (!infoModal.classList.contains('hidden')) infoModal.classList.add('hidden');
   }
 });
 
@@ -148,6 +149,33 @@ window.addEventListener('beforeunload', (e) => {
 });
 
 window.api.onOpenFile((p) => loadFile(p));
+
+// ----- Mermaid yazım kılavuzu (ⓘ) -----
+const infoModal = document.getElementById('info-modal');
+const INFO_EXAMPLES = {
+  flow: 'flowchart TD\n  A[Başla] --> B{Karar}\n  B -->|Evet| C[İşlem]\n  B -->|Hayır| D[Bitir]',
+  seq: 'sequenceDiagram\n  participant K as Kullanıcı\n  participant S as Sunucu\n  K->>S: Giriş isteği\n  S-->>K: Token döner',
+  class: 'classDiagram\n  class Hayvan {\n    +String ad\n    +sesCikar()\n  }\n  class Kedi\n  Hayvan <|-- Kedi',
+  state: 'stateDiagram-v2\n  [*] --> Boşta\n  Boşta --> Çalışıyor: başlat\n  Çalışıyor --> [*]: dur',
+  er: 'erDiagram\n  KULLANICI ||--o{ SIPARIS : "verir"\n  SIPARIS ||--|{ KALEM : "içerir"',
+  gantt: 'gantt\n  title Proje Planı\n  dateFormat YYYY-MM-DD\n  section Tasarım\n    Arayüz: 2026-01-01, 7d\n  section Geliştirme\n    API: 2026-01-08, 14d',
+  mindmap: 'mindmap\n  root((Proje))\n    Backend\n      API\n      Veritabanı\n    Frontend\n      Arayüz\n      State',
+  pie: 'pie\n  title Kullanım Dağılımı\n  "Web" : 60\n  "Mobil" : 40',
+};
+
+document.getElementById('btn-info').onclick = () => infoModal.classList.remove('hidden');
+document.getElementById('info-close').onclick = () => infoModal.classList.add('hidden');
+infoModal.addEventListener('click', (e) => { if (e.target === infoModal) infoModal.classList.add('hidden'); });
+document.querySelectorAll('.info-load').forEach((btn) => {
+  btn.onclick = () => {
+    const code = INFO_EXAMPLES[btn.dataset.example];
+    if (!code) return;
+    editor.value = code;
+    dirty = true;
+    infoModal.classList.add('hidden');
+    renderPreview();
+  };
+});
 
 // ----- Tema seçimi (resimli önizleme popup'ı) -----
 const themeModal = document.getElementById('theme-modal');
