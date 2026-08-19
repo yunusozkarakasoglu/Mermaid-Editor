@@ -65,9 +65,30 @@
   .theme-name { font-size: 12px; color: #cdd6f4; margin-bottom: 6px; }
   .theme-preview { background: #11111b; border-radius: 6px; overflow: hidden; min-height: 100px; display: flex; align-items: center; justify-content: center; }
   .theme-preview svg { max-width: 100%; height: auto; }
-  /* ⓘ bilgi butonu */
-  .info-btn { background: none; border: none; color: #6c7086; font-size: 13px; cursor: pointer; padding: 0 6px; border-radius: 4px; line-height: 1.2; }
-  .info-btn:hover { color: #cdd6f4; background: #313244; }
+  /* ⓘ bilgi butonu — vurgulu */
+  .info-btn {
+    background: #313244;
+    color: #89b4fa;
+    border: 1px solid #6f6bff;
+    font-size: 13px;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    padding: 0;
+    transition: all .15s ease;
+  }
+  .info-btn:hover {
+    background: #6f6bff;
+    color: #ffffff;
+    border-color: #6f6bff;
+    box-shadow: 0 0 8px rgba(111,107,255,.6);
+    transform: scale(1.1);
+  }
   /* Bilgi modalı */
   .info-box { width: 860px; }
   .info-body { overflow-y: auto; max-height: 72vh; padding-right: 6px; }
