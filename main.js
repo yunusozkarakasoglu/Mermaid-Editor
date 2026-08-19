@@ -45,14 +45,8 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 app.whenReady().then(() => {
-  Menu.setApplicationMenu(
-    Menu.buildFromTemplate([
-      { role: 'fileMenu' },
-      { role: 'editMenu' },
-      { role: 'viewMenu' },
-      { role: 'windowMenu' },
-    ])
-  );
+  // Üst menü çubuğu (File/Edit/View/Window) kaldırıldı
+  Menu.setApplicationMenu(null);
   const files = extractMmdArgs(process.argv);
   if (files.length === 0) {
     createWindow(null);

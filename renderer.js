@@ -1,6 +1,5 @@
 const editor = document.getElementById('editor');
 const preview = document.getElementById('preview');
-const pathLabel = document.getElementById('path-label');
 
 let currentPath = null;
 let dirty = false;
@@ -56,7 +55,6 @@ async function loadFile(p) {
   }
   currentPath = res.path;
   editor.value = res.content;
-  pathLabel.textContent = res.path;
   document.title = res.path.split('/').pop() + ' — Mermaid Editor';
   dirty = false;
   renderPreview();
@@ -67,7 +65,6 @@ async function save() {
   const res = await window.api.writeFile(currentPath, editor.value);
   if (res.ok) {
     dirty = false;
-    pathLabel.textContent = currentPath;
   } else {
     alert('Kaydedilemedi: ' + (res.error || ''));
   }
@@ -79,7 +76,6 @@ async function saveAs() {
   if (res.ok) {
     currentPath = res.path;
     dirty = false;
-    pathLabel.textContent = res.path;
     document.title = res.path.split('/').pop() + ' — Mermaid Editor';
   } else if (!res.canceled) {
     alert('Kaydedilemedi: ' + (res.error || ''));
@@ -120,7 +116,7 @@ async function exportPng() {
 
 // ----- etkinlikler -----
 document.getElementById('btn-new').onclick = () => {
-  currentPath = null; editor.value = ''; pathLabel.textContent = ''; dirty = false;
+  currentPath = null; editor.value = ''; dirty = false;
   document.title = 'Mermaid Editor'; renderPreview();
 };
 document.getElementById('btn-open').onclick = async () => {
