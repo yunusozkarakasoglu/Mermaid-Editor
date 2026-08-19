@@ -125,7 +125,6 @@ document.getElementById('btn-open').onclick = async () => {
 };
 document.getElementById('btn-save').onclick = save;
 document.getElementById('btn-saveas').onclick = saveAs;
-document.getElementById('btn-theme').onclick = () => { themeIndex++; setTheme(); };
 document.getElementById('btn-export-svg').onclick = exportSvg;
 document.getElementById('btn-export-png').onclick = exportPng;
 editor.addEventListener('input', onInput);
@@ -134,7 +133,10 @@ window.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); save(); }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'o') { e.preventDefault(); document.getElementById('btn-open').click(); }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') { e.preventDefault(); showAiModal(); }
-  if (e.key === 'Escape' && !aiModal.classList.contains('hidden')) { aiModal.classList.add('hidden'); }
+  if (e.key === 'Escape') {
+    if (!aiModal.classList.contains('hidden')) aiModal.classList.add('hidden');
+    if (!themeModal.classList.contains('hidden')) themeModal.classList.add('hidden');
+  }
 });
 
 window.addEventListener('beforeunload', (e) => {
@@ -145,6 +147,59 @@ window.addEventListener('beforeunload', (e) => {
 });
 
 window.api.onOpenFile((p) => loadFile(p));
+
+// ----- Tema seçimi (resimli önizleme popup'ı) -----
+const themeModal = document.getElementById('theme-modal');
+const themeGrid = document.getElementById('theme-grid');
+const THEME_LABELS = { default: 'Varsayılan', dark: 'Koyu', forest: 'Orman', neutral: 'Nötr', modern: 'Modern' };
+
+async function openThemeModal() {
+  await renderThemePreviews();
+  highlightThemeCards();
+  themeModal.classList.remove('hidden');
+}
+
+function highlightThemeCards() {
+  const active = THEMES[themeIndex % THEMES.length];
+  themeGrid.querySelectorAll('.theme-card').forEach((c) => {
+    c.classList.toggle('active', c.dataset.theme === active);
+  });
+}
+
+async function renderThemePreviews() {
+  const sample = 'flowchart TD\n  A[Başla] --> B{Karar}\n  B -->|Evet| C[İşlem]\n  B -->|Hayır| D[Bitir]';
+  themeGrid.innerHTML = '';
+  for (const t of THEMES) {
+    mermaid.initialize({ startOnLoad: false, theme: t, securityLevel: 'loose', htmlLabels: false, fontFamily: 'system-ui' });
+    const card = document.createElement('div');
+    card.className = 'theme-card';
+    card.dataset.theme = t;
+    card.innerHTML = '<div class="theme-name">' + (THEME_LABELS[t] || t) + '</div><div class="theme-preview"></div>';
+    card.onclick = () => selectTheme(t);
+    themeGrid.appendChild(card);
+    const pv = card.querySelector('.theme-preview');
+    try {
+      const id = 'th-' + t + '-' + Math.random().toString(36).slice(2);
+      const { svg } = await mermaid.render(id, sample);
+      pv.innerHTML = svg;
+    } catch {
+      pv.innerHTML = '<span style="color:#6c7086;font-size:12px">—</span>';
+    }
+  }
+  // Ana temayı geri yükle
+  mermaid.initialize({ startOnLoad: false, theme: THEMES[themeIndex % THEMES.length], securityLevel: 'loose', htmlLabels: false, fontFamily: 'system-ui' });
+}
+
+function selectTheme(t) {
+  themeIndex = THEMES.indexOf(t);
+  setTheme(); // seçim anında uygula
+  highlightThemeCards();
+}
+
+document.getElementById('btn-theme').onclick = openThemeModal;
+document.getElementById('theme-close').onclick = () => themeModal.classList.add('hidden');
+document.getElementById('theme-ok').onclick = () => themeModal.classList.add('hidden');
+themeModal.addEventListener('click', (e) => { if (e.target === themeModal) themeModal.classList.add('hidden'); });
 
 // ----- AI ile Oluştur (basit mantık) -----
 const aiModal = document.getElementById('ai-modal');
