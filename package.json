@@ -4,6 +4,9 @@
   "description": "Mermaid Editor — edit and live-preview Mermaid diagrams, generate them with AI (DeepSeek).",
   "main": "main.js",
   "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "electron .",
     "postinstall": "node node_modules/electron/install.js"

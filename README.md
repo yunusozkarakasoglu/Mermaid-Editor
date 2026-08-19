@@ -13,9 +13,47 @@ Masaüstünde `.mmd` dosyalarını açan, düzenleyen, canlı önizleyen ve **AI
 - **✨ AI ile Oluştur**: DeepSeek API ile doğal dilden Mermaid kodu üret (kod + önizleme popup içinde)
 - Port yok, mermaid.js yerel — tamamen çevrimdışı çalışır
 
-## Gereksinimler
+## Bağımlılıklar (Gereksinimler)
 
-- Node.js 20+ (Electron ve mermaid için)
+### 1. Çalışma zamanı
+- **Node.js 20+** ve **npm** (Node ile birlikte gelir)
+- Electron binary'si `npm install` sırasında otomatik indirilir (postinstall script)
+
+### 2. npm paketleri (`npm install` ile kurulur)
+
+| Paket | Sürüm | Görevi |
+|---|---|---|
+| `electron` | 33.x (test: 33.4.11) | Masaüstü çalışma zamanı (pencere, dosya I/O, IPC) |
+| `mermaid` | 11.x (test: 11.17.0) | Diyagram render motoru (canlı önizleme, export) |
+
+### 3. Linux sistem kütüphaneleri (Electron için)
+
+Standart masaüstü dağıtımlarında (Mint / Ubuntu / Debian masaüstü) **zaten yüklüdür**. Minimal sunucu/container kurulumlarında gerekebilir:
+
+```bash
+# Debian / Ubuntu
+sudo apt install libgtk-3-0 libnotify4 libnss3 libxss1 libxtst6 \
+  libatk1.0-0 libatk-bridge2.0-0 libdrm2 libgbm1 libasound2 libcups2 libxkbcommon0
+```
+
+### 4. Masaüstü entegrasyonu (`install.sh`)
+
+- **xdg-utils** (`update-mime-database`, `update-desktop-database`, `xdg-open`) — çoğu dağıtımda varsayılan
+- `install.sh` şunları kurar: `.mmd` → `text/x-mermaid` MIME kaydı, `mermaid-editor.desktop` dosyası, başlatıcı (`~/.local/bin/mermaid-editor`)
+
+### 5. İsteğe bağlı
+
+| Öğe | Gerekli olduğu yer |
+|---|---|
+| OpenAI uyumlu API key (DeepSeek vb.) | ✨ AI ile Oluştur özelliği |
+| Şablon klasörü (`TEMPLATES_DIR`) | 📁 Şablonlar butonu |
+| `mmdr` CLI ([mermaid-rs-renderer](https://github.com/1jehuang/mermaid-rs-renderer)) | Hızlı batch SVG export (opsiyonel) |
+
+### Sorun giderme
+
+- **Electron binary inmezse:** `node node_modules/electron/install.js` ile manuel indir
+- **Uygulama açılmıyorsa (sandbox hatası):** `node_modules/.bin/electron --no-sandbox .` ile dene
+- **`.mmd` çift tıklama çalışmıyorsa:** `./install.sh`'ı tekrar çalıştır; dosya yöneticisini yenile (`nemo -q`)
 
 ## Kurulum (Linux)
 
